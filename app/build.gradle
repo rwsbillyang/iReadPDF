@@ -1,0 +1,116 @@
+plugins {
+    alias libs.plugins.kotlin.android
+    alias libs.plugins.kotlin.serialization
+    alias libs.plugins.android.application
+    alias libs.plugins.devtools.ksp
+    //alias libs.plugins.androidx.room
+}
+
+android {
+    namespace 'com.github.rwsbillyang.iReadPDF'
+    compileSdk libs.versions.compileSdkVersion.get().toInteger() //kts: toInt()
+
+    defaultConfig {
+        applicationId "com.github.rwsbillyang.iReadPDF"
+        minSdk 26
+        targetSdk libs.versions.targetSdkVersion.get().toInteger() //kts: toInt()
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+//        vectorDrawables {
+//            useSupportLibrary true
+//        }
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments += [
+                        "room.schemaLocation":"$projectDir/schemas".toString(),
+                        "room.incremental":"true"
+                ]
+            }
+        }
+
+        //https://developer.android.google.cn/jetpack/androidx/releases/room?hl=zh-cn
+//        room {
+//            schemaDirectory "$projectDir/schemas"
+//        }
+    }
+
+    buildTypes {
+        release {
+            // Disables PNG crunching for the "release" build type.
+            crunchPngs false
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+    buildFeatures {
+        compose true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion libs.versions.composeVersion.get()
+    }
+    packagingOptions {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
+    }
+}
+
+dependencies {
+    implementation libs.kotlin.stdlib.jdk8
+    implementation libs.kotlin.serialization.json
+
+    implementation libs.androidx.lifecycle.runtime.ktx
+    implementation libs.bundles.androidx.compose
+
+    implementation libs.androidx.compose.material3.window.sizeclass
+
+    debugImplementation libs.androidx.compose.ui.tooling.preview
+    debugImplementation libs.androidx.compose.ui.tooling
+    debugImplementation libs.androidx.compose.ui.test.manifest
+    androidTestImplementation libs.androidx.compose.ui.test.junit4
+
+    testImplementation libs.junit.junit
+    androidTestImplementation libs.androidx.test.ext
+    androidTestImplementation libs.androidx.test.espresso
+
+    implementation libs.androidx.room.runtime
+    implementation libs.androidx.room.ktx
+    ksp libs.androidx.room.compiler
+
+    implementation libs.androidx.datastore.preferences
+
+    //implementation libs.ktor.serialization.kotlinx.json
+   // implementation libs.ktor.client.cio.jvm
+   // implementation libs.ktor.client.content.negotiation
+    //implementation libs.slf4j.simple
+
+    implementation libs.androidx.compose.material
+    implementation libs.androidx.compose.material.icons.extended //https://github.com/adrielcafe/bonsai/issues/4
+
+    implementation libs.composePrefs //https://github.com/JamalMulla/ComposePrefs3
+
+    implementation "androidx.documentfile:documentfile:1.1.0"
+
+
+    implementation libs.composerouter
+    implementation libs.composeui
+
+    // 使用 AndroidPdfViewer 库 (免费开源) depend very old lib android-support-v4:1.0.0
+    //implementation 'com.github.barteksc:android-pdf-viewer:3.2.0-beta.1'
+
+    //https://github.com/afreakyelf/Pdf-Viewer 全家桶，port the core pdf view code
+    //implementation 'io.github.afreakyelf:Pdf-Viewer:2.3.7'
+
+    implementation project(':lib')
+
+}
