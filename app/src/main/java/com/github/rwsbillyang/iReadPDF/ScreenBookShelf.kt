@@ -35,7 +35,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.documentfile.provider.DocumentFile
 import com.github.rwsbillyang.composerouter.ScreenCall
@@ -45,6 +44,7 @@ import com.github.rwsbillyang.composeui.SimpleDataTable
 import com.github.rwsbillyang.iReadPDF.db.Book
 import com.github.rwsbillyang.iReadPDF.db.MyDao
 import com.github.rwsbillyang.iReadPDF.db.db
+import com.github.rwsbillyang.iReadPDF.pdfview.FileUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -75,9 +75,9 @@ fun BookShelfToolIcons(){
 
 // 处理选中的 PDF Uri（包含 MD5 计算和缓存）
 suspend fun handleSelectedPdfUri(ctx: Context, dao: MyDao, viewModel: MyViewModel, uri: Uri) {
-    UriFileUtil.calculateMd5(ctx, uri)?.let {
+    FileUtil.calculateMd5(ctx, uri)?.let {
         val b = dao.findOne(it)
-        val originalFileName = UriFileUtil.getFileNameFromUri(ctx, uri) ?: b?.name?: "unknown.pdf"
+        val originalFileName = FileUtil.getFileNameFromUri(ctx, uri) ?: b?.name?: "unknown.pdf"
         val newBook = Book(it, originalFileName, uri.toString(), 1)
         if(b == null){
             dao.insertOne(newBook)
@@ -105,9 +105,12 @@ fun ScreenBookShelf(call: ScreenCall){
     var selectedRowIndex by remember { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(Unit){
-        viewModel.shelfList.addAll(dao.findAll())
-        viewModel.shelfList.forEach{
-            it.exist = DocumentFile.fromSingleUri(ctx, it.uri)?.exists() == true
+        if(!viewModel.shelfListLoaded){
+            viewModel.shelfListLoaded = true
+            viewModel.shelfList.addAll(dao.findAll())
+            viewModel.shelfList.forEach{
+                it.exist = DocumentFile.fromSingleUri(ctx, it.uri)?.exists() == true
+            }
         }
     }
 

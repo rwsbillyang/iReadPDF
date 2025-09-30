@@ -14,7 +14,7 @@ import androidx.lifecycle.LifecycleOwner
 
 import java.io.File
 
-
+@Deprecated("use PdfView instead")
 //https://github.com/afreakyelf/Pdf-Viewer/blob/master/pdfViewer/src/main/java/com/rajat/pdfviewer/compose/PdfRendererCompose.kt
 @Composable
 fun PdfRendererViewCompose(

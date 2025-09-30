@@ -4,9 +4,11 @@ import android.app.Activity
 import android.content.pm.ActivityInfo
 import android.view.Window
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
@@ -31,14 +33,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.github.rwsbillyang.composerouter.ScreenCall
 import com.github.rwsbillyang.composerouter.useRouter
 import com.github.rwsbillyang.iReadPDF.db.Book
-import com.rajat.pdfviewer.port.PdfRendererView
-import com.rajat.pdfviewer.port.PdfRendererViewCompose
-import com.rajat.pdfviewer.port.PdfSource
-
+import com.github.rwsbillyang.iReadPDF.pdfview.LocalUri
+import com.github.rwsbillyang.iReadPDF.pdfview.PdfView
+import com.github.rwsbillyang.iReadPDF.pdfview.StatusCallBack
+import com.github.rwsbillyang.iReadPDF.pdfview.ZoomListener
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -100,76 +101,33 @@ fun ScreenPdfViewer(call: ScreenCall) {
     viewModel.currentBook.value = currentBook
     currentBook.lastOpen = System.currentTimeMillis()
 
-    // 协程作用域：用于管理延迟任务
-    val coroutineScope = rememberCoroutineScope()
-    // 保存延迟任务的 Job：用于取消未执行的任务
-    var hideUiJob by remember { mutableStateOf<Job?>(null) }
-    // 当前窗口（可能为 null，需判空）
-    val currentWindow = getCurrentWindow()
 
-
-
-    // 1. 监听全屏状态变化，控制窗口UI
-    // ------------------------------
-    LaunchedEffect(viewModel.isFullScreen.value) {
-        currentWindow?.let{window ->
-            if (viewModel.isFullScreen.value) {
-                // 进入全屏：隐藏系统栏（状态栏+导航栏）
-                WindowCompat.setDecorFitsSystemWindows(window, false) // 让内容延伸到系统栏区域
-                WindowCompat.getInsetsController(window, window.decorView).apply {
-                    hide(WindowInsetsCompat.Type.systemBars()) // 隐藏系统栏
-                    //systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE // 滑动边缘唤出系统栏
-                }
-                // 取消之前的“恢复全屏”任务（若有）
-                hideUiJob?.cancel()
-                hideUiJob = null
-            } else {
-                // 退出全屏：显示系统栏
-                WindowCompat.setDecorFitsSystemWindows(window, true) // 内容不延伸到系统栏
-                WindowCompat.getInsetsController(window, window.decorView).apply {
-                    show(WindowInsetsCompat.Type.systemBars()) // 显示系统栏
-                }
-                // 启动3秒后自动恢复全屏的任务
-                hideUiJob = coroutineScope.launch {
-                    delay(5000) // 5秒无操作
-                    viewModel.isFullScreen.value = true // 切换回全屏
-                }
+//    Column(Modifier.fillMaxSize(),verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally){
+//        Text(currentBook.name)
+//    }
+    PdfView(
+        source = LocalUri(currentBook.uri),
+        modifier = Modifier.fillMaxSize().padding(call.scaffoldPadding),
+        page = currentBook.page,
+        statusCallBack = object : StatusCallBack {
+            override fun onPdfLoadStart(displayName: String? ,fileId: String?) {
+                log("onPdfLoadStart $displayName, fileId=$fileId")
             }
-        }
 
-    }
-
-    PdfRendererViewCompose(
-        source = PdfSource.LocalUri(currentBook.uri),
-        lifecycleOwner = LocalLifecycleOwner.current,
-        modifier = Modifier,
-        //headers = HeaderData(mapOf("Authorization" to "123456789")),
-        jumpToPage = currentBook.page,
-        statusCallBack = object : PdfRendererView.StatusCallBack {
-            override fun onPdfLoadStart() {
-                log("onPdfLoadStart")
+            override fun onPdfLoadSuccess(displayName: String? ,fileId: String?) {
+                log("onPdfLoadSuccess $displayName, fileId=$fileId")
             }
-            override fun onPdfLoadProgress(progress: Int, downloadedBytes: Long, totalBytes: Long?) {
-                log("onPdfLoadProgress: progress=$progress, downloadedBytes=$downloadedBytes, totalBytes=$totalBytes")
-            }
-            override fun onPdfLoadSuccess(absolutePath: String) {
-                log("onPdfLoadSuccess: absolutePath=$absolutePath")
-            }
-            override fun onError(error: Throwable) {
-                log("onError=${error.message}")
+            override fun onError(error: String) {
+                log("onError=${error}")
             }
             override fun onPageChanged(currentPage: Int, totalPage: Int) {
+                log("onPageChanged: currentPage=${currentPage}, totalPage=$totalPage")
                 currentBook.page = currentPage
                 currentBook.total = totalPage
             }
-            override fun onPdfRenderStart() {
-                log("onPdfRenderStart")
-            }
-            override fun onPdfRenderSuccess() {
-                log("onPdfRenderSuccess")
-            }
+
         },
-        zoomListener = object : PdfRendererView.ZoomListener {
+        zoomListener = object : ZoomListener {
             override fun onZoomChanged(isZoomedIn: Boolean, scale: Float) {
                 log("onZoomChanged=$isZoomedIn, scale=$scale")
             }
@@ -188,6 +146,49 @@ fun ScreenPdfViewer(call: ScreenCall) {
 //    }
 }
 
+
+@Composable
+fun FullScreen(call: ScreenCall, children: @Composable ()->Unit){
+    // 协程作用域：用于管理延迟任务
+    val coroutineScope = rememberCoroutineScope()
+    // 保存延迟任务的 Job：用于取消未执行的任务
+    var hideUiJob by remember { mutableStateOf<Job?>(null) }
+    // 当前窗口（可能为 null，需判空）
+    val currentWindow = getCurrentWindow()
+    val isFullScreen = remember { mutableStateOf(false) }
+
+    // 1. 监听全屏状态变化，控制窗口UI
+    // ------------------------------
+    LaunchedEffect(isFullScreen.value) {
+        currentWindow?.let{window ->
+            if (isFullScreen.value) {
+                // 进入全屏：隐藏系统栏（状态栏+导航栏）
+                WindowCompat.setDecorFitsSystemWindows(window, false) // 让内容延伸到系统栏区域
+                WindowCompat.getInsetsController(window, window.decorView).apply {
+                    hide(WindowInsetsCompat.Type.systemBars()) // 隐藏系统栏
+                    //systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE // 滑动边缘唤出系统栏
+                }
+                // 取消之前的“恢复全屏”任务（若有）
+                hideUiJob?.cancel()
+                hideUiJob = null
+            } else {
+                // 退出全屏：显示系统栏
+                WindowCompat.setDecorFitsSystemWindows(window, true) // 内容不延伸到系统栏
+                WindowCompat.getInsetsController(window, window.decorView).apply {
+                    show(WindowInsetsCompat.Type.systemBars()) // 显示系统栏
+                }
+                // 启动5秒后自动恢复全屏的任务
+                hideUiJob = coroutineScope.launch {
+                    delay(5000) // 5秒无操作
+                    isFullScreen.value = true // 切换回全屏
+                }
+            }
+        }
+    }
+    Box(Modifier.fillMaxSize()){
+        children()
+    }
+}
 /**
  * 获取当前 Compose 界面的 Activity 窗口（Window）
  */
@@ -200,7 +201,6 @@ fun getCurrentWindow(): Window? {
         null // 宿主不是 Activity 时返回 null（如 Dialog）
     }
 }
-
 //import com.github.barteksc.pdfviewer.PDFView
 //@Composable
 //fun PDFViewWrapper(viewModel: MyViewModel, currentBook: Book){

@@ -9,15 +9,18 @@ import androidx.lifecycle.ViewModel
 
 import com.github.rwsbillyang.iReadPDF.AppConstants.TAG
 import com.github.rwsbillyang.iReadPDF.db.Book
+import com.github.rwsbillyang.iReadPDF.pdfview.PdfPageLoader
 
 
 class MyViewModel: ViewModel(){
-    //val pdfView = mutableStateOf<PDFView?>(null)
-    val isLoadingFile = mutableStateOf(true)
-    val isFullScreen = mutableStateOf(true)
+
+    val isFullScreen = mutableStateOf(false)
 
     val currentBook = mutableStateOf<Book?>(null)
     val shelfList = mutableStateListOf<Book>()
+    var shelfListLoaded = false
+
+    val pdfPageLoader = mutableStateOf<PdfPageLoader?>(null)
 
     fun updateTotalPages(pages: Int) {
         currentBook.value?.let { it.total = pages }?:Log.w(TAG, "currentBook is null")

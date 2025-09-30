@@ -19,6 +19,9 @@ import com.github.rwsbillyang.composerouter.nav.NavScaffold3
 import com.github.rwsbillyang.iReadPDF.db.Book
 import com.github.rwsbillyang.iReadPDF.db.db
 import com.github.rwsbillyang.iReadPDF.ui.theme.MyAppTheme
+import com.github.rwsbillyang.iReadPDF.pdfview.FileUtil
+import kotlinx.coroutines.MainScope
+
 import kotlinx.coroutines.launch
 
 //https://developer.android.google.cn/jetpack/compose/compositionlocal?hl=zh-cn
@@ -72,6 +75,11 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        viewModel.pdfPageLoader.value?.closePdfRender()
+    }
+
     private fun handleIntent(intent: Intent) {
         when {
             intent.action == Intent.ACTION_VIEW -> {
@@ -106,11 +114,14 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
     }
 
     private fun jumpToTmpBook(uri: Uri){
-        val id = UriFileUtil.calculateMd5(this, uri)
-        if(id != null){
-            val originalFileName = UriFileUtil.getFileNameFromUri(this, uri) ?: "unknown.pdf"
-            val tmpBook = Book(id, originalFileName, uri.toString(), 0)
-            localRouter.navByName(AppRoutes.PDFViewer, tmpBook)
+        val ctx = this
+        MainScope().launch {
+            val id = FileUtil.calculateMd5(ctx, uri)
+            if(id != null){
+                val originalFileName = FileUtil.getFileNameFromUri(ctx, uri) ?: "unknown.pdf"
+                val tmpBook = Book(id, originalFileName, uri.toString(), 0)
+                localRouter.navByName(AppRoutes.PDFViewer, tmpBook)
+            }
         }
     }
 

@@ -34,8 +34,9 @@ import java.io.File
 
 /**
  * Created by Rajat on 11,July,2020
+ * https://github.com/afreakyelf/Pdf-Viewer/blob/master/pdfViewer/src/main/java/com/rajat/pdfviewer/PdfRendererView.kt
  */
-////https://github.com/afreakyelf/Pdf-Viewer/blob/master/pdfViewer/src/main/java/com/rajat/pdfviewer/PdfRendererView.kt
+@Deprecated("use PdfView instead")
 class PdfRendererView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr), LifecycleObserver {

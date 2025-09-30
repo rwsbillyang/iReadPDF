@@ -8,7 +8,7 @@ fun log(str: String) {
     if(AppConstants.DebugRender) Log.d(AppConstants.TAG, str)
 }
 object AppConstants {
-    const val DebugRender = false
+    const val DebugRender = true
     const val TAG = "MyAPP"
 
     const val KEY_CURRENT= "current"

@@ -111,6 +111,6 @@ dependencies {
     //https://github.com/afreakyelf/Pdf-Viewer 全家桶，port the core pdf view code
     //implementation 'io.github.afreakyelf:Pdf-Viewer:2.3.7'
 
-    implementation project(':lib')
+    //implementation project(':lib')
 
 }
