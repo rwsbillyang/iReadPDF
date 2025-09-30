@@ -1,4 +1,4 @@
-package com.github.rwsbillyang.pdfview
+package com.rajat.pdfviewer.port
 
 import android.app.Activity
 import android.content.Context
@@ -21,7 +21,8 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.NO_POSITION
-import com.github.rwsbillyang.R
+import com.rajat.pdfviewer.R
+
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

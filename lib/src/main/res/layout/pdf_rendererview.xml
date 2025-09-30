@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <com.github.rwsbillyang.pdfview.PinchZoomRecyclerView
+    <com.rajat.pdfviewer.PinchZoomRecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

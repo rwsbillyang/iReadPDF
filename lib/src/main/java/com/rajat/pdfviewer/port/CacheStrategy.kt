@@ -1,4 +1,4 @@
-package com.github.rwsbillyang.pdfview
+package com.rajat.pdfviewer.port
 
 enum class CacheStrategy {
     MINIMIZE_CACHE,  // Keep only one file at a time

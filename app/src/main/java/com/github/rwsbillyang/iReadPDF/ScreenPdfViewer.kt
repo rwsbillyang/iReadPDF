@@ -35,9 +35,10 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.github.rwsbillyang.composerouter.ScreenCall
 import com.github.rwsbillyang.composerouter.useRouter
 import com.github.rwsbillyang.iReadPDF.db.Book
-import com.github.rwsbillyang.pdfview.PdfRendererView
-import com.github.rwsbillyang.pdfview.PdfRendererViewCompose
-import com.github.rwsbillyang.pdfview.PdfSource
+import com.rajat.pdfviewer.port.PdfRendererView
+import com.rajat.pdfviewer.port.PdfRendererViewCompose
+import com.rajat.pdfviewer.port.PdfSource
+
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

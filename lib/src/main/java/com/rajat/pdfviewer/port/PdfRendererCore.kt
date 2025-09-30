@@ -1,5 +1,5 @@
-package com.github.rwsbillyang.pdfview
-//https://github.com/afreakyelf/Pdf-Viewer/blob/master/pdfViewer/src/main/java/com/rajat/pdfviewer/PdfRendererCore.kt
+package com.rajat.pdfviewer.port
+
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.pdf.PdfRenderer
@@ -19,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.abs
 
+//https://github.com/afreakyelf/Pdf-Viewer/blob/master/pdfViewer/src/main/java/com/rajat/pdfviewer/PdfRendererCore.kt
 class PdfRendererCore private constructor(
     private val fileDescriptor: ParcelFileDescriptor,
     private val cacheManager: CacheManager,
@@ -196,7 +197,8 @@ class PdfRendererCore private constructor(
                     val aspectRatio = size.width.toFloat() / size.height.toFloat()
                     val height = (fallbackWidth / aspectRatio).toInt()
 
-                    val bitmap = CommonUtils.Companion.BitmapPool.getBitmap(fallbackWidth, maxOf(1, height))
+                    val bitmap =
+                        CommonUtils.Companion.BitmapPool.getBitmap(fallbackWidth, maxOf(1, height))
                     renderPage(pageNo, bitmap) { success, _, _ ->
                         if (!success) CommonUtils.Companion.BitmapPool.recycleBitmap(bitmap)
                     }

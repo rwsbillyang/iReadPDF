@@ -1,4 +1,4 @@
-package com.github.rwsbillyang.pdfview
+package com.rajat.pdfviewer.port
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -15,7 +15,8 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.ProgressBar
 import androidx.recyclerview.widget.RecyclerView
-import com.github.rwsbillyang.R
+import com.rajat.pdfviewer.R
+
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
@@ -36,7 +37,7 @@ internal class PdfViewAdapter(
     override fun getItemCount(): Int = renderer.getPageCount()
 
     // Create new views (invoked by the layout manager)
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) : PdfPageViewHolder{
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) : PdfPageViewHolder {
         // Create a new view, which defines the UI of the list item
         val view = LayoutInflater.from(parent.context).inflate(R.layout.list_item_pdf_page, parent, false)
         return PdfPageViewHolder(view)

@@ -1,4 +1,4 @@
-package com.github.rwsbillyang.pdfview
+package com.rajat.pdfviewer.port
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -20,7 +20,7 @@ class CacheManager(
     private val cacheStrategy: CacheStrategy = CacheStrategy.MAXIMIZE_PERFORMANCE
 ) {
     private val memoryCache: LruCache<Int, Bitmap> = createMemoryCache()
-    private var cacheDir = File(context.cacheDir, "${CACHE_PATH}/$currentOpenedFileName")
+    private var cacheDir = File(context.cacheDir, "$CACHE_PATH/$currentOpenedFileName")
 
     suspend fun initialize() = withContext(Dispatchers.IO) {
         if (cacheStrategy == CacheStrategy.DISABLE_CACHE) return@withContext
@@ -35,7 +35,7 @@ class CacheManager(
             cacheDir,
             cacheStrategy,
             currentOpenedFileName,
-            CommonUtils.Companion.MAX_CACHED_PDFS
+            CommonUtils.MAX_CACHED_PDFS
         )
     }
 

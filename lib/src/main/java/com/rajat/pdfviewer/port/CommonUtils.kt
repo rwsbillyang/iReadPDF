@@ -1,10 +1,10 @@
-package com.github.rwsbillyang.pdfview
+package com.rajat.pdfviewer.port
 
-//https://github.com/afreakyelf/Pdf-Viewer/blob/master/pdfViewer/src/main/java/com/rajat/pdfviewer/util/CommonUtils.kt
 
 import android.graphics.Bitmap
 import java.util.*
 
+//https://github.com/afreakyelf/Pdf-Viewer/blob/master/pdfViewer/src/main/java/com/rajat/pdfviewer/util/CommonUtils.kt
 class CommonUtils {
 
     companion object {

@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace 'com.github.rwsbillyang'
+    namespace 'com.rajat.pdfviewer'
     compileSdk libs.versions.compileSdkVersion.get().toInteger() //kts: toInt()
 
     defaultConfig {
@@ -70,8 +70,8 @@ afterEvaluate {
                 from components.release
 
                 // You can then customize attributes of the publication as shown below.
-                groupId = "com.github.rwsbillyang"
-                artifactId = "pdfview"
+                groupId = "com.rajat.pdfviewer"
+                artifactId = "port"
                 version = libs.versions.composerouterVersion.get()
             }
         }

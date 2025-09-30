@@ -1,4 +1,4 @@
-package com.github.rwsbillyang.pdfview
+package com.rajat.pdfviewer.port
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect

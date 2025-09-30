@@ -1,13 +1,14 @@
-package com.github.rwsbillyang.pdfview
+package com.rajat.pdfviewer.port
 
 
 import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.github.rwsbillyang.R
+import com.rajat.pdfviewer.R
 
-////https://github.com/afreakyelf/Pdf-Viewer/blob/master/pdfViewer/src/main/java/com/rajat/pdfviewer/PdfPageScrollListener.kt
+
+//https://github.com/afreakyelf/Pdf-Viewer/blob/master/pdfViewer/src/main/java/com/rajat/pdfviewer/PdfPageScrollListener.kt
 internal class PdfPageScrollListener(
     private val pageNoTextView: TextView,
     private val totalPageCount: () -> Int,
