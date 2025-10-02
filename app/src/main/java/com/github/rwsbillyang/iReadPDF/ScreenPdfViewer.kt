@@ -134,16 +134,6 @@ fun ScreenPdfViewer(call: ScreenCall) {
         }
     )
 
-//    if (viewModel.isLoadingFile.value) {
-//        Box(Modifier.fillMaxSize(), Alignment.Center) {
-//            // 显示加载进度
-//            CircularProgressIndicator(
-//                modifier = Modifier.width(32.dp),
-//                color = MaterialTheme.colorScheme.secondary,
-//                trackColor = MaterialTheme.colorScheme.surfaceVariant
-//            )
-//        }
-//    }
 }
 
 

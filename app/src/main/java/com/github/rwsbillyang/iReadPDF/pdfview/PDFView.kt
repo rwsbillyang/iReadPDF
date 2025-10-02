@@ -53,6 +53,9 @@ fun PdfView(
     val scope = rememberCoroutineScope()
     val viewModel: MyViewModel = LocalViewModel.current
     // lifecycleOwner: LifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current,
+    val configuration = LocalConfiguration.current
+    Log.d(TAG, "screenWidthDp=${configuration.screenWidthDp}, screenHeightDp=${configuration.screenHeightDp}")
+
 
     val listState = rememberLazyListState()
     var err by remember { mutableStateOf("PDF loading ") }
@@ -77,7 +80,14 @@ fun PdfView(
             val fd = source.getFileDescriptor(ctx)
             val fileId = source.getFileId(ctx)
             if (fd != null || fileId != null) {
-                viewModel.pdfPageLoader.value = PdfPageLoader.create(fd!!, fileId!!, ctx, cacheStrategy)
+                val pdfPageLoader = PdfPageLoader.create(fd!!, fileId!!, ctx, cacheStrategy)
+                viewModel.pdfPageLoader.value = pdfPageLoader
+
+                val w = configuration.screenWidthDp
+                val h = (w * pdfPageLoader.pageSize.height) / pdfPageLoader.pageSize.width
+                viewModel.lazyItemWidth.value = w
+                viewModel.lazyItemHeight.value =  h
+                Log.d(TAG, "lazy item: w=$w, h=$h")
                 statusCallBack?.onPdfLoadSuccess(name, id)
                 listState.scrollToItem(index = page, 0)
             } else {
@@ -93,8 +103,7 @@ fun PdfView(
         }
     }
 
-    val configuration = LocalConfiguration.current
-    Log.d(TAG, "screenWidthDp=${configuration.screenWidthDp}, screenHeightDp=${configuration.screenHeightDp}")
+
 
     //quality low:5 , medium: 3, high:1
     //val qualityRatio: Int = ctx.resources.displayMetrics.densityDpi / (1 * 72)
@@ -110,8 +119,8 @@ fun PdfView(
         Box(modifier) {
             LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 items(viewModel.pdfPageLoader.value!!.pdfRenderer.pageCount, { it.toString() }) { index ->
-                    Box(modifier = Modifier.width(configuration.screenWidthDp.dp).height(configuration.screenHeightDp.dp)){
-                        PdfPage(index, configuration.screenWidthDp)
+                    Box(modifier = Modifier.width(viewModel.lazyItemWidth.value.dp).height(viewModel.lazyItemHeight.value.dp)){
+                        PdfPage(index)
                     }
                 }
             }
@@ -124,18 +133,18 @@ fun PdfView(
 
 
 @Composable
-fun PdfPage(page: Int, width: Int) {
+fun PdfPage(page: Int) {
     var loading by remember { mutableStateOf(true) }
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
     val viewModel: MyViewModel = LocalViewModel.current
     val pdfPageLoader = viewModel.pdfPageLoader.value!!
 
-    Log.d(TAG, "PdfPage $page")
+    //Log.d(TAG, "PdfPage $page")
 
     LaunchedEffect(pdfPageLoader, page) {
         //load page 若缓存中有，从缓存中取出，否则渲染，并加入缓存
-        val cachedBitmap = pdfPageLoader.loadPage(page, width)
-        Log.d(TAG, "load page $page done!")
+        val cachedBitmap = pdfPageLoader.loadPage(page, 1.0F)
+        //Log.d(TAG, "load page $page done!")
         if (cachedBitmap != null) {
             bitmap = cachedBitmap
             loading = false
@@ -153,20 +162,20 @@ fun PdfPage(page: Int, width: Int) {
             Text("loading page $page ")
         }
     } else {
-        if (bitmap != null) {
+        bitmap?.let {
             Image(
-                bitmap!!.asImageBitmap(), "Pdf page $page",
+                it.asImageBitmap(), "Pdf page $page",
                 Modifier.fillMaxSize().background(Color.Red), Alignment.Center,
-                ContentScale.Fit
+                ContentScale.Fit, //保持横宽比拉伸pdf
+                //ContentScale.Crop //在较小的手机屏幕上。因pdf页面较大，导致外围不显示，只是显示中间部分
+                //ContentScale.FillBounds // 对bitmap进行拉伸填充屏幕，会变形
             ) //ContentScale.Fit ContentScale.FitWidth ContentScale.FitHeight
-        } else {
-            Column(
-                Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text("something wrong")
-            }
+        }?:Column(
+            Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("something wrong")
         }
     }
 }

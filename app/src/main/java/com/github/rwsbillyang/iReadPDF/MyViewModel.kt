@@ -21,6 +21,8 @@ class MyViewModel: ViewModel(){
     var shelfListLoaded = false
 
     val pdfPageLoader = mutableStateOf<PdfPageLoader?>(null)
+    val lazyItemWidth = mutableStateOf(10)
+    val lazyItemHeight = mutableStateOf(10)
 
     fun updateTotalPages(pages: Int) {
         currentBook.value?.let { it.total = pages }?:Log.w(TAG, "currentBook is null")
