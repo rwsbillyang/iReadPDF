@@ -2,14 +2,22 @@ package com.github.rwsbillyang.iReadPDF
 
 import android.app.Activity
 import android.content.pm.ActivityInfo
+import android.util.Log
 import android.view.Window
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.rounded.Adjust
@@ -29,15 +37,25 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.ViewModel
 import com.github.rwsbillyang.composerouter.ScreenCall
 import com.github.rwsbillyang.composerouter.useRouter
+import com.github.rwsbillyang.iReadPDF.AppConstants.TAG
 import com.github.rwsbillyang.iReadPDF.db.Book
 import com.github.rwsbillyang.iReadPDF.pdfview.LocalUri
+import com.github.rwsbillyang.iReadPDF.pdfview.PdfSource
 import com.github.rwsbillyang.iReadPDF.pdfview.PdfView
 import com.github.rwsbillyang.iReadPDF.pdfview.StatusCallBack
 import kotlinx.coroutines.Job
@@ -45,41 +63,54 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
-fun PdfViewerToolIcons() {
-    val router = useRouter()
-    val viewModel: MyViewModel = LocalViewModel.current
-    val context = LocalContext.current
-    Spacer(Modifier.width(8.dp))
-    val b = viewModel.currentBook.value
-    Text(
-        b?.total?.let { "${b.page}/$it" } ?: "${b?.page}",
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        style = MaterialTheme.typography.bodySmall
-    )
-
-    IconButton(onClick = { router.navByName(AppRoutes.BookShelf) }) {
-        Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = "book shelf")
-    }
-
-    IconButton(onClick = {
-        //TODO: go to page, open a dialog
-        //b?.page =
-    }) {
-        Icon(Icons.Rounded.Adjust, contentDescription = "go to page dialog")
-    }
-
-    IconButton(onClick = {
-        (context as? Activity)?.requestedOrientation = if(b?.landscape == 1) ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-    }) {
-        if(b?.landscape == 1)
-            Icon(Icons.Rounded.Portrait, contentDescription = "portrait")
-        else
-            Icon(Icons.Rounded.Landscape, contentDescription = "landscape")
-    }
-
-    IconButton(onClick = { router.navByName(AppRoutes.Settings) })
+fun ToolBarItem(strId: Int, icon: ImageVector, modifier: Modifier, onClick:()->Unit){
+    val text: String = stringResource(strId)
+    Column(modifier.height(48.dp).wrapContentWidth(Alignment.CenterHorizontally)
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = { onClick() })
+            },
+        verticalArrangement = Arrangement.Bottom,
+        horizontalAlignment = Alignment.CenterHorizontally)
     {
-        Icon(Icons.Rounded.Settings, contentDescription = "Settings")
+        Icon(icon, contentDescription = text, Modifier.fillMaxWidth())
+        Text(text, Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+    }
+}
+@Composable
+fun ToolsBar(){
+    val viewModel: MyViewModel = LocalViewModel.current
+    log("to show tools bar")
+    val b = viewModel.currentBook.value
+    val router = useRouter()
+    val context = LocalContext.current
+
+    //zIndex(1f)大者在小者之上
+    Row(Modifier.fillMaxWidth().height(48.dp).background(Color.DarkGray).alpha(0.5f).zIndex(1f),
+        Arrangement.SpaceAround, Alignment.Bottom){
+        val w = Modifier.weight(1f)
+
+        ToolBarItem(R.string.bookshelf, Icons.AutoMirrored.Filled.MenuBook, w){
+            router.navByName(AppRoutes.BookShelf)
+        }
+        ToolBarItem(R.string.jump, Icons.Rounded.Adjust, w){
+            Log.d(TAG, "TODO: jump to page")
+        }
+
+        if(b?.landscape == 1){
+            ToolBarItem(R.string.portrait, Icons.Rounded.Portrait, w){
+                (context as? Activity)?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                b.landscape = 0
+            }
+        }else{
+            ToolBarItem(R.string.landscape, Icons.Rounded.Landscape, w){
+                (context as? Activity)?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE
+                b?.landscape = 1
+            }
+        }
+
+        ToolBarItem(R.string.settings, Icons.Rounded.Settings, w){
+            router.navByName(AppRoutes.Settings)
+        }
     }
 }
 
@@ -93,53 +124,65 @@ fun ScreenPdfViewer(call: ScreenCall) {
         }
         return
     }
-
-
-
     val viewModel: MyViewModel = LocalViewModel.current
     viewModel.currentBook.value = currentBook
     currentBook.lastOpen = System.currentTimeMillis()
 
 
+    var loadSuccess by remember { mutableStateOf(false) }
+    var showToolsBar by remember { mutableStateOf(false) }
+    var pdfSource by remember(currentBook.uri){  mutableStateOf(LocalUri(currentBook.uri)) }
 
-    PdfView(
-        LocalUri(currentBook.uri),
-        currentBook.page,
-        currentBook.zoom,
-        currentBook.offsetX,
-        currentBook.offsetY,
-        Modifier.fillMaxSize().padding(call.scaffoldPadding),
-        object : StatusCallBack {
-            override fun onPdfLoadStart(displayName: String? ,fileId: String?) {
-                log("onPdfLoadStart $displayName, fileId=$fileId")
-            }
 
-            override fun onPdfLoadSuccess(displayName: String? ,fileId: String?, totalPage: Int) {
-                log("onPdfLoadSuccess $displayName, fileId=$fileId}, totalPage=$totalPage")
-                currentBook.total = totalPage
-            }
-            override fun onError(error: String) {
-                log("onError=${error}")
-            }
-            override fun onPageChanged(currentPage: Int) {
-                log("onPageChanged: currentPage=$currentPage")
-                currentBook.page = currentPage
-            }
-
-            override fun onTransformStateChanged(
-                zoomChange: Float,
-                offsetChange: Offset,
-                rotationChange: Float
-            ) {
-                log("onTransformStateChanged: zoomChange=$zoomChange,offsetChange=(${offsetChange.x},${offsetChange.y}), rotationChange=$rotationChange")
-
-                //viewModel.rotation.value += rotationChange
-                viewModel.updateTransformState(zoomChange, offsetChange.x, offsetChange.y)
-            }
+    Box(modifier = Modifier.fillMaxSize()
+        .padding(call.scaffoldPadding).pointerInput(Unit) {
+            detectTapGestures(onTap = { showToolsBar = !showToolsBar })
+        }, Alignment.BottomCenter)
+    {
+        if(loadSuccess && showToolsBar){
+            ToolsBar()
         }
-    )
+        PdfView(
+            pdfSource,//不可使用LocalUri(currentBook.uri)从而使LocalUri总在变化，从而PdfView中source变化，引起一连串的Effect反应
+            currentBook.page,
+            currentBook.zoom,
+            currentBook.offsetX,
+            currentBook.offsetY,
+            Modifier.fillMaxSize().zIndex(0f),
+            object : StatusCallBack {
+                override fun onPdfLoadStart(displayName: String? ,fileId: String?) {
+                    log("onPdfLoadStart $displayName, fileId=$fileId")
+                }
+
+                override fun onPdfLoadSuccess(displayName: String? ,fileId: String?, totalPage: Int) {
+                    log("onPdfLoadSuccess $displayName, fileId=$fileId}, totalPage=$totalPage")
+                    currentBook.total = totalPage
+                    loadSuccess = true
+                }
+                override fun onError(error: String) {
+                    log("onError=${error}")
+                }
+                override fun onPageChanged(currentPage: Int) {
+                    log("onPageChanged: currentPage=$currentPage")
+                    currentBook.page = currentPage
+                }
+
+                override fun onTransformStateChanged(
+                    zoomChange: Float,
+                    offsetChange: Offset,
+                    rotationChange: Float
+                ) {
+                    log("onTransformStateChanged: zoomChange=$zoomChange,offsetChange=(${offsetChange.x},${offsetChange.y}), rotationChange=$rotationChange")
+
+                    //viewModel.rotation.value += rotationChange
+                    viewModel.updateTransformState(zoomChange, offsetChange.x, offsetChange.y)
+                }
+            }
+        )
+    }
 
 }
+
 
 
 @Composable

@@ -21,8 +21,7 @@ fun getAppRoutes() = listOf(
         })
     ),
 
-    route(AppRoutes.PDFViewer, R.string.app_name, screen = ScaffoldScreen3(
-        { ScreenPdfViewer(it) }, {PdfViewerToolIcons()})),
+    route(AppRoutes.PDFViewer, R.string.app_name, useNavScaffold = false){ScreenPdfViewer(it)},
 
 
     route(AppRoutes.Settings, R.string.settings){ SettingsScreen(it.scaffoldPadding) },

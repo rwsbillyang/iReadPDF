@@ -62,11 +62,11 @@ fun PdfView(
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    val viewModel: MyViewModel = LocalViewModel.current
+    //val viewModel: MyViewModel = LocalViewModel.current
     // lifecycleOwner: LifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current,
 
     val configuration = LocalConfiguration.current
-    Log.d(TAG, "screenWidthDp=${configuration.screenWidthDp}, screenHeightDp=${configuration.screenHeightDp}")
+    Log.d(TAG, "PdfView: screenWidthDp=${configuration.screenWidthDp}, screenHeightDp=${configuration.screenHeightDp}")
 
     var loading by remember { mutableStateOf(true) }
     var err by remember { mutableStateOf("fail to load PDF") }
@@ -115,7 +115,7 @@ fun PdfView(
                 lazyItemHeight.value =  h
                 Log.d(TAG, "lazy item: w=$w, h=$h")
 
-                statusCallBack?.onPdfLoadSuccess(name, id, loader.pageCount.get())
+                statusCallBack?.onPdfLoadSuccess(name, id, loader.pageCount)
                 listState.requestScrollToItem(index = page, 0)
             } else {
                 err = "Load PDF fail: fail to get fileDescriptor or id"
@@ -132,17 +132,15 @@ fun PdfView(
 
 
     if (pdfPageLoader == null) {
-        if (loading) {
-            CircularProgressIndicator()
-        }else{
-            Column(modifier,
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+        Column(modifier,
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if (loading)
+                CircularProgressIndicator()
+            else
                 Text(err)
-            }
         }
-
     } else {
         Box(modifier.graphicsLayer(
             scaleX = scale, //viewModel.currentBook.value?.zoom?:1.0f,
@@ -152,15 +150,12 @@ fun PdfView(
             translationY = offset.y,//viewModel.currentBook.value?.offsetX?:0f,
         ).transformable(state = transformableState)) {
             LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                items(pdfPageLoader!!.pdfRenderer.pageCount, { it.toString() }) { index ->
+                items(pdfPageLoader!!.pageCount, { it.toString() }) { index ->
                     Box(modifier = Modifier.width(lazyItemWidth.value.dp).height(lazyItemHeight.value.dp)){
                         PdfPage(pdfPageLoader!!, index)
                     }
                 }
             }
-
-            //TODO Operation tool bar
-
         }
     }
 }

@@ -17,10 +17,6 @@ object CacheHelper {
         keepFileId: String,
         maxCachedPdfs: Int
     ) = withContext(Dispatchers.IO) {
-        Log.d(
-            "CacheHelper",
-            "Cache Strategy: $cacheStrategy | Directory: $pdfCacheDir | keepFileId: $keepFileId"
-        )
         val cacheDirFile = File(pdfCacheDir)
         when (cacheStrategy) {
             CacheStrategy.MINIMIZE_CACHE -> {

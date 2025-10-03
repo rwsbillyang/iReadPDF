@@ -31,7 +31,7 @@ class PdfPageLoader(
     private val renderLock = Mutex()
     private val renderJobs = ConcurrentHashMap<Int, Deferred<Bitmap?>>()
 
-    val pageCount = AtomicInteger(pdfRenderer.pageCount)
+    var pageCount = 0
     var pageSize = Size(1,1)
 
     companion object{
@@ -42,6 +42,7 @@ class PdfPageLoader(
     }
 
     init {
+        pageCount = pdfRenderer.pageCount
         preloadPageDimension()
     }
 
@@ -53,7 +54,7 @@ class PdfPageLoader(
     }
 
     suspend fun loadPage( pageNo: Int,  quality: Float) = withContext(Dispatchers.IO) {
-        if (pageNo < 0 || pageNo >= pageCount.get()) {
+        if (pageNo < 0 || pageNo >= pageCount) {
             Log.w(TAG, "Skipped invalid render for page $pageNo")
             null
         }else{
@@ -135,7 +136,7 @@ class PdfPageLoader(
             else -> (currentPage - prefetchDistance)..(currentPage + prefetchDistance)
         }
         val sortedPages = range
-            .filter { it in 0 until pageCount.get() }
+            .filter { it in 0 until pageCount }
             .filter { !cacheManager.pageExistsInCache(it) }
             .sortedBy { abs(it - currentPage) } // prefer pages close to current page
 

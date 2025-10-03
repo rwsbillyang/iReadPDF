@@ -10,6 +10,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.ViewModel
 import com.github.rwsbillyang.iReadPDF.AppConstants.TAG
 import com.github.rwsbillyang.iReadPDF.db.Book
+import com.github.rwsbillyang.iReadPDF.pdfview.PdfSource
 
 
 class MyViewModel: ViewModel(){
@@ -17,6 +18,7 @@ class MyViewModel: ViewModel(){
     val isFullScreen = mutableStateOf(false)
 
     val currentBook = mutableStateOf<Book?>(null)
+
     val shelfList = mutableStateListOf<Book>()
     var shelfListLoaded = false
 
