@@ -6,6 +6,7 @@ import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import android.util.Size
+import com.github.rwsbillyang.iReadPDF.AppConstants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -19,11 +20,10 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.abs
 
 class PdfPageLoader(
-    val pdfRenderer: PdfRenderer,
+    private val pdfRenderer: PdfRenderer,
     private val fd: ParcelFileDescriptor,
     private val cacheManager: CacheManager
 ) {
@@ -38,6 +38,7 @@ class PdfPageLoader(
         suspend fun create(fd: ParcelFileDescriptor, fileId: String, ctx: Context, cacheStrategy: CacheStrategy) =
             PdfPageLoader(PdfRenderer(fd), fd, CacheManager(ctx.cacheDir.absolutePath, fileId, cacheStrategy).apply {
                 initialize()
+                Log.d(AppConstants.TAG, "create pdfPageLoader done")
             })
     }
 

@@ -10,13 +10,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
@@ -24,9 +21,8 @@ import androidx.compose.material.icons.rounded.Adjust
 import androidx.compose.material.icons.rounded.Landscape
 import androidx.compose.material.icons.rounded.Portrait
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,13 +45,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.ViewModel
 import com.github.rwsbillyang.composerouter.ScreenCall
 import com.github.rwsbillyang.composerouter.useRouter
 import com.github.rwsbillyang.iReadPDF.AppConstants.TAG
 import com.github.rwsbillyang.iReadPDF.db.Book
-import com.github.rwsbillyang.iReadPDF.pdfview.LocalUri
-import com.github.rwsbillyang.iReadPDF.pdfview.PdfSource
 import com.github.rwsbillyang.iReadPDF.pdfview.PdfView
 import com.github.rwsbillyang.iReadPDF.pdfview.StatusCallBack
 import kotlinx.coroutines.Job
@@ -65,7 +58,10 @@ import kotlinx.coroutines.launch
 @Composable
 fun ToolBarItem(strId: Int, icon: ImageVector, modifier: Modifier, onClick:()->Unit){
     val text: String = stringResource(strId)
-    Column(modifier.height(48.dp).wrapContentWidth(Alignment.CenterHorizontally)
+    Column(
+        modifier
+            .height(48.dp)
+            .wrapContentWidth(Alignment.CenterHorizontally)
             .pointerInput(Unit) {
                 detectTapGestures(onTap = { onClick() })
             },
@@ -80,12 +76,18 @@ fun ToolBarItem(strId: Int, icon: ImageVector, modifier: Modifier, onClick:()->U
 fun ToolsBar(){
     val viewModel: MyViewModel = LocalViewModel.current
     log("to show tools bar")
-    val b = viewModel.currentBook.value
+    val b = viewModel.currentBook
     val router = useRouter()
     val context = LocalContext.current
 
     //zIndex(1f)大者在小者之上
-    Row(Modifier.fillMaxWidth().height(48.dp).background(Color.DarkGray).alpha(0.5f).zIndex(1f),
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .background(Color.DarkGray)
+            .alpha(0.5f)
+            .zIndex(1f),
         Arrangement.SpaceAround, Alignment.Bottom){
         val w = Modifier.weight(1f)
 
@@ -124,63 +126,64 @@ fun ScreenPdfViewer(call: ScreenCall) {
         }
         return
     }
+
+    val ctx = LocalContext.current
     val viewModel: MyViewModel = LocalViewModel.current
-    viewModel.currentBook.value = currentBook
-    currentBook.lastOpen = System.currentTimeMillis()
 
-
-    var loadSuccess by remember { mutableStateOf(false) }
     var showToolsBar by remember { mutableStateOf(false) }
-    var pdfSource by remember(currentBook.uri){  mutableStateOf(LocalUri(currentBook.uri)) }
 
-
-    Box(modifier = Modifier.fillMaxSize()
-        .padding(call.scaffoldPadding).pointerInput(Unit) {
-            detectTapGestures(onTap = { showToolsBar = !showToolsBar })
-        }, Alignment.BottomCenter)
-    {
-        if(loadSuccess && showToolsBar){
-            ToolsBar()
-        }
-        PdfView(
-            pdfSource,//不可使用LocalUri(currentBook.uri)从而使LocalUri总在变化，从而PdfView中source变化，引起一连串的Effect反应
-            currentBook.page,
-            currentBook.zoom,
-            currentBook.offsetX,
-            currentBook.offsetY,
-            Modifier.fillMaxSize().zIndex(0f),
-            object : StatusCallBack {
-                override fun onPdfLoadStart(displayName: String? ,fileId: String?) {
-                    log("onPdfLoadStart $displayName, fileId=$fileId")
-                }
-
-                override fun onPdfLoadSuccess(displayName: String? ,fileId: String?, totalPage: Int) {
-                    log("onPdfLoadSuccess $displayName, fileId=$fileId}, totalPage=$totalPage")
-                    currentBook.total = totalPage
-                    loadSuccess = true
-                }
-                override fun onError(error: String) {
-                    log("onError=${error}")
-                }
-                override fun onPageChanged(currentPage: Int) {
-                    log("onPageChanged: currentPage=$currentPage")
-                    currentBook.page = currentPage
-                }
-
-                override fun onTransformStateChanged(
-                    zoomChange: Float,
-                    offsetChange: Offset,
-                    rotationChange: Float
-                ) {
-                    log("onTransformStateChanged: zoomChange=$zoomChange,offsetChange=(${offsetChange.x},${offsetChange.y}), rotationChange=$rotationChange")
-
-                    //viewModel.rotation.value += rotationChange
-                    viewModel.updateTransformState(zoomChange, offsetChange.x, offsetChange.y)
-                }
-            }
-        )
+    LaunchedEffect(currentBook){
+        viewModel.onBookMaybeChanged(currentBook, ctx)
     }
 
+    if(viewModel.pdfPageLoader == null){
+        Column(Modifier.fillMaxSize().padding(call.scaffoldPadding),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if (viewModel.loadingPdf)
+                CircularProgressIndicator()
+            else
+                Text("Load PDF fail: fail to get fileDescriptor or id")
+        }
+    }else{
+        Box(modifier = Modifier.fillMaxSize().padding(call.scaffoldPadding)
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = { showToolsBar = !showToolsBar })
+            },
+            Alignment.BottomCenter)
+        {
+            PdfView(
+                viewModel.pdfPageLoader!!,
+                currentBook.page,
+                currentBook.zoom,
+                currentBook.offsetX,
+                currentBook.offsetY,
+                Modifier.fillMaxSize().zIndex(0f),
+                object : StatusCallBack {
+                    override fun onPageChanged(currentPage: Int) {
+                        log("onPageChanged: currentPage=$currentPage")
+                        currentBook.page = currentPage
+                    }
+
+                    override fun onTransformStateChanged(
+                        zoomChange: Float,
+                        offsetChange: Offset,
+                        rotationChange: Float
+                    ) {
+                        log("onTransformStateChanged: zoomChange=$zoomChange,offsetChange=(${offsetChange.x},${offsetChange.y}), rotationChange=$rotationChange")
+
+                        //viewModel.rotation.value += rotationChange
+                        viewModel.updateTransformState(zoomChange, offsetChange.x, offsetChange.y)
+                    }
+                }
+            )
+
+            if(showToolsBar){
+                ToolsBar()
+            }
+        }
+    }
 }
 
 

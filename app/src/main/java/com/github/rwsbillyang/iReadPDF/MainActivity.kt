@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
@@ -61,7 +62,7 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
     override fun onPause() {
         super.onPause()
         // 保存当前阅读进度
-        viewModel.currentBook.value?.let {
+        viewModel.currentBook?.let {
             val dao = db(this).dao()
             lifecycleScope.launch {
                 dao.findOne(it.id)?.let { //书架中的，能找到则保存，其它如临时打开第三方发起的则不保存
@@ -75,11 +76,11 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
         }
     }
 
-//    override fun onDestroy() {
-//        super.onDestroy()
-//        viewModel.pdfPageLoader.value?.closePdfRender()
-//        viewModel.pdfPageLoader.value = null
-//    }
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d(AppConstants.TAG, "onDestroy, releasePdfLoader")
+        viewModel.releasePdfLoader()
+    }
 
     private fun handleIntent(intent: Intent) {
         when {
