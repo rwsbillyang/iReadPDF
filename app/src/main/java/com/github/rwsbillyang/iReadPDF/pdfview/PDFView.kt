@@ -24,6 +24,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -33,6 +34,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
+import com.github.rwsbillyang.iReadPDF.db.Book
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 internal const val TAG = "PDFView"
 
@@ -42,10 +45,7 @@ internal const val TAG = "PDFView"
 @Composable
 fun PdfView(
     pdfPageLoader: PdfPageLoader,
-    page: Int = 0,
-    initialZoom: Float = 1.0f,
-    initialOffsetX: Float = 0.0f,
-    initialOffsetY: Float = 0.0f,
+    book: Book,
     modifier: Modifier = Modifier,
     statusCallBack: StatusCallBack? = null
 ) {
@@ -59,15 +59,14 @@ fun PdfView(
 
 
     //val rotation = mutableFloatStateOf(0f)
-    var scale by remember { mutableFloatStateOf(initialZoom)}
-    var offset by remember { mutableStateOf(Offset(initialOffsetX, initialOffsetY))}
+    var scale by remember { mutableFloatStateOf(book.zoom)}
+    var offset by remember { mutableStateOf(Offset(book.offsetX, book.offsetY))}
     val transformableState  = rememberTransformableState { zoomChange, offsetChange, rotationChange ->
         scale *= zoomChange
         offset += offsetChange
         statusCallBack?.onTransformStateChanged(zoomChange, offsetChange, rotationChange) ?: Log.w(TAG, "not save zoomChange=$zoomChange, offsetChange=$offsetChange, rotationChange=$rotationChange")
     }
 
-    //var pdfPageLoader by remember { mutableStateOf<PdfPageLoader?>(null)}
     val lazyItemWidth = remember { mutableStateOf(configuration.screenWidthDp) }
     val lazyItemHeight = remember(pdfPageLoader.pageSize) {
         mutableStateOf((lazyItemWidth.value * pdfPageLoader.pageSize.height) / pdfPageLoader.pageSize.width)
@@ -75,27 +74,33 @@ fun PdfView(
 
     //listen page change
     val listState = rememberLazyListState()
-//    LaunchedEffect(listState) {
+    LaunchedEffect(listState) {
+        Log.d(TAG, "requestScrollToItem ${book.page}, pageOffset=${ book.pageOffset}")
+        listState.requestScrollToItem(book.page, book.pageOffset)
+
 //        snapshotFlow { listState.firstVisibleItemIndex }
-//            .map { it >= 0 }
 //            .distinctUntilChanged()
 //            .collect {
-//
-//               // MyAnalyticsService.sendScrolledPastFirstItemEvent()
-//                Log.d(TAG, "listState.layoutInfo.visibleItemsInfo.size=${listState.layoutInfo.visibleItemsInfo.size}")
+//                Log.d(TAG, "firstVisibleItemIndex=${listState.firstVisibleItemIndex}, listState.firstVisibleItemScrollOffset=${listState.firstVisibleItemScrollOffset}")
+//                statusCallBack?.onPageChanged(listState.firstVisibleItemIndex)
 //            }
-//    }
 
-
+        snapshotFlow { listState.firstVisibleItemScrollOffset }
+            .distinctUntilChanged()
+            .collect {
+                //Log.d(TAG, "firstVisibleItemIndex=${listState.firstVisibleItemIndex}, listState.firstVisibleItemScrollOffset=${listState.firstVisibleItemScrollOffset}")
+                statusCallBack?.onPageChanged(listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset)
+            }
+    }
 
     Box(modifier.graphicsLayer(
-        scaleX = scale, //viewModel.currentBook.value?.zoom?:1.0f,
-        scaleY = scale, //viewModel.currentBook.value?.zoom?:1.0f,
+        scaleX = scale,
+        scaleY = scale,
         //rotationZ = viewModel.rotation.value,
-        translationX = offset.x, //viewModel.currentBook.value?.offsetX?:0f,
-        translationY = offset.y,//viewModel.currentBook.value?.offsetX?:0f,
+        translationX = offset.x,
+        translationY = offset.y,
     ).transformable(state = transformableState)) {
-        LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(4.dp), state = listState) {
             items(pdfPageLoader.pageCount, { it.toString() }) { index ->
                 Box(modifier = Modifier.width(lazyItemWidth.value.dp).height(lazyItemHeight.value.dp)){
                     PdfPage(pdfPageLoader, index)

@@ -4,7 +4,7 @@ import androidx.compose.ui.geometry.Offset
 
 
 interface StatusCallBack {
-    fun onPageChanged(currentPage: Int) {}
+    fun onPageChanged(currentPage: Int, pageOffset: Int) {}
 
     fun onTransformStateChanged(zoomChange: Float, offsetChange: Offset, rotationChange: Float){}
 }

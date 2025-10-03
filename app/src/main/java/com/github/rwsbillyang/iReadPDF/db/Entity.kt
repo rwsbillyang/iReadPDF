@@ -34,11 +34,12 @@ class Book(
     val format: String = "pdf",
 
     var page: Int = 0,// current reading page number
+    var pageOffset: Int = 0,// listState.firstVisibleItemScrollOffset
     var total: Int? = null, // total pages
     var zoom: Float = 1.0f, //current reading zoom level
-    var offsetX: Float = 0.0F, //current reading scroll
-    var offsetY: Float = 0.0F, //current reading scroll
-    var landscape: Int = 0, //current reading 0: portait, 1: landscape
+    var offsetX: Float = 0.0F, //TransformState offsetChange
+    var offsetY: Float = 0.0F, //TransformState offsetChange
+    var landscape: Int = 0, //current reading 0: portrait, 1: landscape
     var lastOpen: Long = 0, // last open time, utc
 ) {
     @Ignore
