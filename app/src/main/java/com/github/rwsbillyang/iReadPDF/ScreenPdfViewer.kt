@@ -29,6 +29,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
@@ -39,7 +40,6 @@ import com.github.rwsbillyang.iReadPDF.db.Book
 import com.github.rwsbillyang.iReadPDF.pdfview.LocalUri
 import com.github.rwsbillyang.iReadPDF.pdfview.PdfView
 import com.github.rwsbillyang.iReadPDF.pdfview.StatusCallBack
-import com.github.rwsbillyang.iReadPDF.pdfview.ZoomListener
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -94,42 +94,47 @@ fun ScreenPdfViewer(call: ScreenCall) {
         return
     }
 
-    //val context = LocalContext.current
-    //val lifecycleOwner = LocalLifecycleOwner.current
+
 
     val viewModel: MyViewModel = LocalViewModel.current
     viewModel.currentBook.value = currentBook
     currentBook.lastOpen = System.currentTimeMillis()
 
 
-//    Column(Modifier.fillMaxSize(),verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally){
-//        Text(currentBook.name)
-//    }
+
     PdfView(
-        source = LocalUri(currentBook.uri),
-        modifier = Modifier.fillMaxSize().padding(call.scaffoldPadding),
-        page = currentBook.page,
-        statusCallBack = object : StatusCallBack {
+        LocalUri(currentBook.uri),
+        currentBook.page,
+        currentBook.zoom,
+        currentBook.offsetX,
+        currentBook.offsetY,
+        Modifier.fillMaxSize().padding(call.scaffoldPadding),
+        object : StatusCallBack {
             override fun onPdfLoadStart(displayName: String? ,fileId: String?) {
                 log("onPdfLoadStart $displayName, fileId=$fileId")
             }
 
-            override fun onPdfLoadSuccess(displayName: String? ,fileId: String?) {
-                log("onPdfLoadSuccess $displayName, fileId=$fileId")
+            override fun onPdfLoadSuccess(displayName: String? ,fileId: String?, totalPage: Int) {
+                log("onPdfLoadSuccess $displayName, fileId=$fileId}, totalPage=$totalPage")
+                currentBook.total = totalPage
             }
             override fun onError(error: String) {
                 log("onError=${error}")
             }
-            override fun onPageChanged(currentPage: Int, totalPage: Int) {
-                log("onPageChanged: currentPage=${currentPage}, totalPage=$totalPage")
+            override fun onPageChanged(currentPage: Int) {
+                log("onPageChanged: currentPage=$currentPage")
                 currentBook.page = currentPage
-                currentBook.total = totalPage
             }
 
-        },
-        zoomListener = object : ZoomListener {
-            override fun onZoomChanged(isZoomedIn: Boolean, scale: Float) {
-                log("onZoomChanged=$isZoomedIn, scale=$scale")
+            override fun onTransformStateChanged(
+                zoomChange: Float,
+                offsetChange: Offset,
+                rotationChange: Float
+            ) {
+                log("onTransformStateChanged: zoomChange=$zoomChange,offsetChange=(${offsetChange.x},${offsetChange.y}), rotationChange=$rotationChange")
+
+                //viewModel.rotation.value += rotationChange
+                viewModel.updateTransformState(zoomChange, offsetChange.x, offsetChange.y)
             }
         }
     )

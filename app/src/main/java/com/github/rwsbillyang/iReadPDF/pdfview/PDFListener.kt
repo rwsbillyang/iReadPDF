@@ -1,9 +1,11 @@
 package com.github.rwsbillyang.iReadPDF.pdfview
 
+import androidx.compose.ui.geometry.Offset
+
 
 interface StatusCallBack {
     fun onPdfLoadStart(displayName: String? ,fileId: String?) {}
-    fun onPdfLoadSuccess(displayName: String? ,fileId: String?) {}
+    fun onPdfLoadSuccess(displayName: String? ,fileId: String?, totalPage: Int) {}
     fun onError(error: String) {}
     //fun onPdfLoadProgress(progress: Int, downloadedBytes: Long, totalBytes: Long?) {}
 
@@ -11,9 +13,7 @@ interface StatusCallBack {
 //    fun onPdfRenderSuccess() {}
 
 
-    fun onPageChanged(currentPage: Int, totalPage: Int) {}
-}
+    fun onPageChanged(currentPage: Int) {}
 
-interface ZoomListener {
-    fun onZoomChanged(isZoomedIn: Boolean, scale: Float)
+    fun onTransformStateChanged(zoomChange: Float, offsetChange: Offset, rotationChange: Float){}
 }

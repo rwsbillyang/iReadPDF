@@ -75,11 +75,11 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        viewModel.pdfPageLoader.value?.closePdfRender()
-        viewModel.pdfPageLoader.value = null
-    }
+//    override fun onDestroy() {
+//        super.onDestroy()
+//        viewModel.pdfPageLoader.value?.closePdfRender()
+//        viewModel.pdfPageLoader.value = null
+//    }
 
     private fun handleIntent(intent: Intent) {
         when {

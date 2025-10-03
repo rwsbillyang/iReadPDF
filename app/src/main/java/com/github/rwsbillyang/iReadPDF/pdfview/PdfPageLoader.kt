@@ -29,9 +29,9 @@ class PdfPageLoader(
 ) {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val renderLock = Mutex()
-    private val pageCount = AtomicInteger(pdfRenderer.pageCount)
     private val renderJobs = ConcurrentHashMap<Int, Deferred<Bitmap?>>()
 
+    val pageCount = AtomicInteger(pdfRenderer.pageCount)
     var pageSize = Size(1,1)
 
     companion object{

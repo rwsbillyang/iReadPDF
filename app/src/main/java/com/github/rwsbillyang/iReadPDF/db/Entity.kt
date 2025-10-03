@@ -36,8 +36,8 @@ class Book(
     var page: Int = 0,// current reading page number
     var total: Int? = null, // total pages
     var zoom: Float = 1.0f, //current reading zoom level
-    var scrollX: Int = 0, //current reading scroll
-    var scrollY: Int = 0, //current reading scroll
+    var offsetX: Float = 0.0F, //current reading scroll
+    var offsetY: Float = 0.0F, //current reading scroll
     var landscape: Int = 0, //current reading 0: portait, 1: landscape
     var lastOpen: Long = 0, // last open time, utc
 ) {
