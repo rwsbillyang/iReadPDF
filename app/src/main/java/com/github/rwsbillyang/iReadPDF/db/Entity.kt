@@ -1,11 +1,14 @@
 package com.github.rwsbillyang.iReadPDF.db
 
 
+import android.content.Context
 import android.net.Uri
 import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.PrimaryKey
+import com.github.rwsbillyang.iReadPDF.pdfview.CacheManager
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 
 /**
@@ -21,7 +24,10 @@ import kotlinx.serialization.Serializable
 
 
 /**
- *
+ * pdf file要么通过uri指定，通常再次启动app后有打开权限问题。
+ * 要么复制一份后，通过file进行打开，此时为为空，本地LocalFile为默认的文件名，默认路径，通过pdfFile函数获取
+ * 实际情况为多用后一种方案，viewModel中创建pdfPageLoader时自动判断，使用后一种方式创建
+ * 若是第三方发来intent调用，则是用第一种方式即通过uri打开
  * */
 @Serializable
 @Entity
@@ -29,8 +35,8 @@ class Book(
     @PrimaryKey//(autoGenerate = true)
     val id: String,//  md5(file content)
     val name: String, // file name
-    val uriStr: String, // absolute path + file
-    val inShelf: Int = 0, //in book shelf: 1, or tmp : 0
+    val uriStr: String? = null, //
+    var hasCover: Int = 0, //first page could be cover
     val format: String = "pdf",
 
     var page: Int = 0,// current reading page number
@@ -43,11 +49,19 @@ class Book(
     var lastOpen: Long = 0, // last open time, utc
 ) {
     @Ignore
-    var exist: Boolean = true
+    var cachePages: Boolean = true
 
     //@get:Ignore
-    val uri
-        get() = Uri.parse(uriStr)
+    val uri: Uri?
+        get() = uriStr?.let{Uri.parse(it)}
+
+    //PdfPageLoader中的loadFirstPageAsCover创建cover时将其创建到特定位置
+    fun cover(ctx: Context) = CacheManager.defaultCover(ctx, id)
+
+    //BookShelf 添加书籍的处理，handleSelectedPdfUri中FileUtil的copy函数，copy到指定位置
+    fun pdfFile(ctx: Context) = CacheManager.defaultPdfFile(ctx, id)
+
+    override fun toString() = Json.encodeToString(serializer(), this)
 
 }
 

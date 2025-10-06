@@ -8,4 +8,6 @@
     <string name="jump">Jump</string>
     <string name="portrait">Portrait</string>
     <string name="landscape">Landscape</string>
+    <string name="cancel_cover">Cancel Cover</string>
+    <string name="first_page_cover">Auto Cover</string>
 </resources>

@@ -6,7 +6,6 @@ import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import android.util.Size
-import com.github.rwsbillyang.iReadPDF.AppConstants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -19,6 +18,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs
 
@@ -35,14 +36,58 @@ class PdfPageLoader(
     var pageSize = Size(1,1)
 
     companion object{
-        suspend fun create(fd: ParcelFileDescriptor, fileId: String, ctx: Context, cacheStrategy: CacheStrategy) =
-            PdfPageLoader(PdfRenderer(fd), fd, CacheManager(ctx.cacheDir.absolutePath, fileId, cacheStrategy).apply {
-                initialize()
-                Log.d(AppConstants.TAG, "create pdfPageLoader done")
-            })
+        suspend fun create(fd: ParcelFileDescriptor, fileId: String, ctx: Context, cacheStrategy: CacheStrategy) = withContext(Dispatchers.IO){
+            PdfPageLoader(PdfRenderer(fd), fd, CacheManager(ctx, fileId, cacheStrategy))
+        }
+
+
+        /**
+         * @param pdfFile: files/_pdf_/$md5.pdf
+         * */
+        suspend fun create(pdfFile: File, fileId: String, ctx: Context, cacheStrategy: CacheStrategy):PdfPageLoader?{
+            if(!pdfFile.exists()){
+                return null
+            }
+            Log.d(TAG, "to open pdf: ${pdfFile.absolutePath}")
+            val fd = ParcelFileDescriptor.open(pdfFile, ParcelFileDescriptor.MODE_READ_ONLY)
+            return create(fd, fileId, ctx, cacheStrategy)
+        }
+
+        /**
+         * @param fileId: book.id
+         * @param height cover height
+         * @return  absolute path of cover of pdfFile
+         * TODO: not consider the conflict with PdfPageLoader instance
+         * */
+        suspend fun loadFirstPageAsCover(fileId: String, ctx: Context,  height: Int) = withContext(Dispatchers.IO){
+            val pdfFile = CacheManager.defaultPdfFile(ctx, fileId)
+            try{
+                val fd = ParcelFileDescriptor.open(pdfFile, ParcelFileDescriptor.MODE_READ_ONLY)
+                val pdfPage = PdfRenderer(fd).openPage(0)
+                val width = height * pdfPage.width / pdfPage.height
+                Log.d(TAG, "cover height=$height, width=$width")
+                val renderedBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                pdfPage.render(
+                    renderedBitmap,
+                    null,
+                    null,
+                    PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY
+                )
+                val cover = CacheManager.defaultCover(ctx, fileId)
+                FileOutputStream(cover).use { fos ->
+                    renderedBitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)
+                }
+                pdfPage.close()
+                fd.close()
+                cover
+            }catch (e: Exception){
+                e.printStackTrace()
+                null
+            }
+        }
     }
 
-    init {
+    fun preload() {
         pageCount = pdfRenderer.pageCount
         preloadPageDimension()
     }
@@ -54,7 +99,7 @@ class PdfPageLoader(
         page.close()
     }
 
-    suspend fun loadPage( pageNo: Int,  quality: Float) = withContext(Dispatchers.IO) {
+    suspend fun loadPage(pageNo: Int,  quality: Float) = withContext(Dispatchers.IO) {
         if (pageNo < 0 || pageNo >= pageCount) {
             Log.w(TAG, "Skipped invalid render for page $pageNo")
             null

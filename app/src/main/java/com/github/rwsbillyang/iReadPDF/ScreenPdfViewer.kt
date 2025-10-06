@@ -144,7 +144,7 @@ fun ScreenPdfViewer(call: ScreenCall) {
             if (viewModel.loadingPdf)
                 CircularProgressIndicator()
             else
-                Text("Load PDF fail: fail to get fileDescriptor or id")
+                Text("Load PDF fail: no file")
         }
     }else{
         Box(modifier = Modifier.fillMaxSize().padding(call.scaffoldPadding)
@@ -159,7 +159,7 @@ fun ScreenPdfViewer(call: ScreenCall) {
                 Modifier.fillMaxSize().zIndex(0f),
                 object : StatusCallBack {
                     override fun onPageChanged(currentPage: Int, pageOffset: Int) {
-                        log("onPageChanged: currentPage=$currentPage, pageOffset=$pageOffset")
+                        //log("onPageChanged: currentPage=$currentPage, pageOffset=$pageOffset")
                         currentBook.page = currentPage
                         currentBook.pageOffset = pageOffset
                     }

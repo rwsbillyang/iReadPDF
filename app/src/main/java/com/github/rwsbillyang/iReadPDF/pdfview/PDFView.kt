@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 import com.github.rwsbillyang.iReadPDF.db.Book
 import kotlinx.coroutines.flow.distinctUntilChanged
 
-internal const val TAG = "PDFView"
+internal const val TAG = "MyApp"
 
 
 
@@ -142,7 +142,7 @@ fun PdfPage(pdfPageLoader:PdfPageLoader , page: Int) {
         bitmap?.let {
             Image(
                 it.asImageBitmap(), "Pdf page $page",
-                Modifier.fillMaxSize().background(Color.Red), Alignment.Center,
+                Modifier.fillMaxSize(), Alignment.Center,
                 ContentScale.Fit, //保持横宽比拉伸pdf
                 //ContentScale.Crop //在较小的手机屏幕上。因pdf页面较大，导致外围不显示，只是显示bitmap的中间部分
                 //ContentScale.FillBounds // 对bitmap进行拉伸填充屏幕，会变形

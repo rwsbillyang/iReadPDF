@@ -11,22 +11,21 @@ import kotlin.math.max
 //https://github.com/afreakyelf/Pdf-Viewer/
 object CacheHelper {
     // **Apply Cache Strategy**
-    suspend fun handleCacheStrategy(
-        pdfCacheDir: String, //context.cacheDir/$CACHE_PATH
+    fun handleCacheStrategy(
+        cachedPagesDir: File, //context.cacheDir/_pdf_/$md5
         cacheStrategy: CacheStrategy,
         keepFileId: String,
         maxCachedPdfs: Int
-    ) = withContext(Dispatchers.IO) {
-        val cacheDirFile = File(pdfCacheDir)
+    ) {
         when (cacheStrategy) {
-            CacheStrategy.MINIMIZE_CACHE -> {
-                clearAllPreviousCache(cacheDirFile, keepFileId)
+            CacheStrategy.MINIMIZE_CACHE -> {//only cache pages of current book
+                clearAllPreviousCache(cachedPagesDir, keepFileId)
             }
-            CacheStrategy.MAXIMIZE_PERFORMANCE -> {
-                updateCacheAccessTime(cacheDirFile)
-                enforceCacheLimit(cacheDirFile, maxCachedPdfs)
+            CacheStrategy.MAXIMIZE_PERFORMANCE -> {//only cache pages of latest 5 books
+                updateCacheAccessTime(cachedPagesDir)
+                enforceCacheLimit(cachedPagesDir, maxCachedPdfs)
             }
-            CacheStrategy.DISABLE_CACHE -> {
+            CacheStrategy.DISABLE_CACHE -> {//not cache
                 // no-op
             }
         }

@@ -1,15 +1,18 @@
 package com.github.rwsbillyang.iReadPDF.db
 
 import androidx.room.*
-//import androidx.sqlite.db.SupportSQLiteQuery
+
 
 
 @Dao
 interface MyDao {
 
-//    @RawQuery
-//    suspend fun findFromYunMiscStarsToStopGong(sql: SupportSQLiteQuery): List<YunMiscStarsToStopGong>
+    // db.execSQL("PRAGMA wal_checkpoint;");
+    //@RawQuery
+    //suspend fun execSQL(sql: SupportSQLiteQuery) //must return a non-void type.
 
+    @Query("SELECT COUNT(*) FROM Book")
+    suspend fun count(): Long
 
     @Query("SELECT * FROM Book where id=:id")
     suspend fun findOne(id: String): Book?
@@ -20,7 +23,7 @@ interface MyDao {
 
     @Insert
     suspend fun insertAll(vararg entities: Book)
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOne(e: Book)
 
     @Update

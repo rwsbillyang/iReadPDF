@@ -5,7 +5,6 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,15 +14,18 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
+import androidx.sqlite.db.SimpleSQLiteQuery
 import com.github.rwsbillyang.composerouter.nav.LocalRoutableActivity
 import com.github.rwsbillyang.composerouter.nav.NavScaffold3
 import com.github.rwsbillyang.iReadPDF.db.Book
 import com.github.rwsbillyang.iReadPDF.db.db
-import com.github.rwsbillyang.iReadPDF.ui.theme.MyAppTheme
+import com.github.rwsbillyang.iReadPDF.db.syncDb
 import com.github.rwsbillyang.iReadPDF.pdfview.FileUtil
+import com.github.rwsbillyang.iReadPDF.ui.theme.MyAppTheme
 import kotlinx.coroutines.MainScope
-
 import kotlinx.coroutines.launch
+import java.io.FileOutputStream
+
 
 //https://developer.android.google.cn/jetpack/compose/compositionlocal?hl=zh-cn
 //一种错误做法的示例是创建包含特定屏幕的 ViewModel 的 CompositionLocal，以便该屏幕中的所有可组合项都可以获取对 ViewModel 的引用来执行某些逻辑。
@@ -61,27 +63,40 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
     }
     override fun onPause() {
         super.onPause()
-        // 保存当前阅读进度
-        viewModel.currentBook?.let {
-            val dao = db(this).dao()
-            lifecycleScope.launch {
-                dao.findOne(it.id)?.let { //书架中的，能找到则保存，其它如临时打开第三方发起的则不保存
-                    val sharedPreferences = getSharedPreferences("iRead", Context.MODE_PRIVATE)
-                    // sharedPreferences.edit().remove(AppConstants.KEY_CURRENT).apply()
-                    sharedPreferences.edit().putString(AppConstants.KEY_CURRENT, it.id).apply()
-                    dao.updateOne(it)
-                }
-
-            }
-        }
+        log("onPause,saveCurrentBook")
+        saveCurrentBook()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.d(AppConstants.TAG, "onDestroy, releasePdfLoader")
+        //saveCurrentBook()
+        log("onDestroy, releasePdfLoader and shelf list")
         viewModel.releasePdfLoader()
+        viewModel.releaseShelfList()
+        syncDb(this)
     }
 
+    private fun saveCurrentBook(){
+
+        val dao = db(this).dao()
+        // 保存当前阅读进度
+        lifecycleScope.launch {
+            viewModel.currentBook?.let {
+                log("save currentBook: $it")
+                val sharedPreferences = getSharedPreferences("iRead", Context.MODE_PRIVATE)
+                // sharedPreferences.edit().remove(AppConstants.KEY_CURRENT).apply()
+                sharedPreferences.edit().putString(AppConstants.KEY_CURRENT, it.id).apply()
+
+                dao.updateOne(it)
+            }
+
+            //dao.execSQL(SimpleSQLiteQuery("PRAGMA wal_checkpoint;"))
+
+            val count = dao.count()
+            log("db books count: $count")
+
+        }
+    }
     private fun handleIntent(intent: Intent) {
         when {
             intent.action == Intent.ACTION_VIEW -> {
@@ -106,6 +121,7 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
                        if(b == null){
                            localRouter.navByName(AppRoutes.BookShelf)
                        }else{
+                           log("open last read book: $b")
                            this@MainActivity.requestedOrientation = if(b.landscape == 1) ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
                            localRouter.navByName(AppRoutes.PDFViewer, b)
                        }
@@ -118,10 +134,12 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
     private fun jumpToTmpBook(uri: Uri){
         val ctx = this
         MainScope().launch {
-            val id = FileUtil.calculateMd5(ctx, uri)
+            val id = FileUtil.calculateMd5(ctx, uri)//view model中创建PdfPageLoader通过uri打开，而不是file打开
             if(id != null){
                 val originalFileName = FileUtil.getFileNameFromUri(ctx, uri) ?: "unknown.pdf"
-                val tmpBook = Book(id, originalFileName, uri.toString(), 0)
+                val tmpBook = Book(id, originalFileName, uri.toString()).apply {
+                    cachePages = false //临时打开的pdf不缓存其页面
+                }
                 localRouter.navByName(AppRoutes.PDFViewer, tmpBook)
             }
         }

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import java.io.FileOutputStream
 
 @Database(entities = [
     Book::class,
@@ -33,6 +34,18 @@ abstract class AppDatabase : RoomDatabase() {
 }
 
 fun db(applicationContext: Context) = AppDatabase.getInstance(applicationContext)
+
+/**
+ * 添加完books到数据库，再退出app后，再clear app历史记录，导致添加到db中的books丢失
+ * 若不清除系统刚使用过的app，则不会丢失
+ * TODO：问题依然如旧
+ * */
+fun syncDb(applicationContext: Context) {
+    FileOutputStream(db(applicationContext).openHelper.writableDatabase.path).apply {
+        flush()
+        fd.sync()
+    }
+}
 //fun db(applicationContext: Context) = Room.databaseBuilder(
 //    applicationContext,
 //    AppDatabase::class.java, "app.db"

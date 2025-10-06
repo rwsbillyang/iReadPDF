@@ -4,8 +4,7 @@ import android.content.Context
 import android.database.Cursor
 import android.net.Uri
 import android.provider.OpenableColumns
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import android.util.Log
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -15,45 +14,45 @@ import java.security.NoSuchAlgorithmException
 
 object FileUtil {
     @Throws(IOException::class)
-    suspend fun copyFileFromAsset(context: Context, assetName: String) = copy(context, context.assets.open(assetName), assetName)
+    fun copyFileFromAsset(context: Context, assetName: String,  destFile: File) = copy(context.assets.open(assetName), destFile)
 
 
+    /**
+     * copy pdfSrcUri into destFile
+     * @param pdfSrcUri pdf source uri
+     * */
     @Throws(IOException::class)
-    suspend fun copyFromUri(ctx: Context, uri: Uri):File?{
-         return ctx.contentResolver.openInputStream(uri)?.let {
-            copy(ctx, it, getFileNameFromUri(ctx, uri) ?:System.currentTimeMillis().toString())
+    fun copyFromUri(ctx: Context, pdfSrcUri: Uri,  destFile: File){
+        ctx.contentResolver.openInputStream(pdfSrcUri)?.let {
+            copy(it, destFile)
         }
     }
 
 
     //需要注意的是，ContentResolver打开的输入流可能需要正确关闭，所以在复制完成后，要确保输入流和输出流都被关闭。
     // 可以使用try-with-resources（在Kotlin中使用use函数）来自动管理资源。
-    /**
-     * defaultName the default destination file name, if fail when md5 of file content, then use default name
-     * */
-    private suspend fun copy(ctx: Context, inputStream: InputStream, defaultName: String) = withContext(Dispatchers.IO)  {
-        inputStream.use {
-            val md5Hash = calculateMd5ByInputStream(it) ?:defaultName// 计算文件 MD5
-            val tmp = "${md5Hash}.pdf"
-
-            val tempFile = File(ctx.cacheDir, tmp)// 创建以 MD5 命名的临时文件（保留 .pdf 后缀）
-            tempFile.outputStream().use { output ->
-                inputStream.copyTo(output)
-            }
-
-            // 验证复制后的文件 MD5（可选，确保复制完整性）
-//                val copiedFileMd5 = calculateMd5(tempFile.inputStream())
-//                if (copiedFileMd5 != md5Hash) {
-//                    tempFile.delete()
-//                    throw IOException("文件复制后 MD5 不一致，可能已损坏")
-//                }
-
-             tempFile
-        }
+    private  fun copy(inputStream: InputStream, destFile: File){
+         if(!destFile.exists())
+             try {
+                 inputStream.use {
+                     destFile.outputStream().use { output ->
+                         inputStream.copyTo(output)
+                     }
+                     // 验证复制后的文件 MD5（可选，确保复制完整性）
+//            val copiedFileMd5 = calculateMd5ByInputStream(destFile.inputStream())
+//            if (copiedFileMd5 != md5Hash) {
+//                destFile.delete()
+//                Log.e(TAG, "copy failed")
+//            }
+                 }
+             }catch (e: Exception){
+                 destFile.delete()
+                 Log.e(TAG, "copy failed")
+             }
     }
 
 
-    suspend fun calculateMd5(ctx: Context, uri: Uri): String?{
+     fun calculateMd5(ctx: Context, uri: Uri): String?{
         return try {
             ctx.contentResolver.openInputStream(uri)?.use { inputStream ->
                 calculateMd5ByInputStream(inputStream) ?: getFileNameFromUri(ctx, uri)// 计算文件 MD5
@@ -68,8 +67,8 @@ object FileUtil {
     // 现代设备的计算速度足够快（约 10-100ms）。文件名生成仅为字符串拼接，无性能问题。
     // readBytes()方法会将整个文件加载到内存，对于超大 PDF（如超过 100MB）可能导致内存溢出。
     // 改用分块读取方式：
-    suspend fun calculateMd5ByInputStream(inputStream: InputStream) = withContext(Dispatchers.IO){
-        try {
+     fun calculateMd5ByInputStream(inputStream: InputStream):String? {
+        return try {
             val md5 = MessageDigest.getInstance("MD5")
             val buffer = ByteArray(8192) // 8KB 缓冲区
             var bytesRead: Int
@@ -91,9 +90,51 @@ object FileUtil {
             e.printStackTrace()
             null
         }
-
     }
 
+
+    /**
+     * defaultName the default destination file name, if fail when md5 of file content, then use default name
+     * */
+    fun calculateMd5AndCopy(inputStream: InputStream, destAbsolute: String, destName: String) : String?{
+        return try {
+            val md5 = MessageDigest.getInstance("MD5")
+            val buffer = ByteArray(8192) // 8KB 缓冲区
+            var bytesRead: Int
+
+
+            val d = File("$destAbsolute/${System.currentTimeMillis()}")
+            if (!d.exists()) {
+                d.mkdirs()
+            }
+            val tempFile = File(d, destName)
+            val outputStream = tempFile.outputStream()
+
+            while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                md5.update(buffer, 0, bytesRead)
+                outputStream.write(buffer, 0, bytesRead)
+            }
+
+            val md5Hash = md5.digest().foldIndexed(StringBuilder()) { index, sb, byte ->
+                if (index == 0) sb.append(String.format("%02x", byte))
+                else sb.append(String.format("%02x", byte))
+            }.toString()
+
+            outputStream.close()
+            d.renameTo(File("$destAbsolute/$md5Hash"))
+
+            md5Hash
+        } catch (e: NoSuchAlgorithmException) {
+            e.printStackTrace()
+            null
+        } catch (e: NullPointerException) {
+            e.printStackTrace()
+            null
+        } catch (e: IOException) {
+            e.printStackTrace()
+            null
+        }
+    }
 
     /**
      * 从 Content Uri 中获取原始文件名（如 "example.pdf"）
