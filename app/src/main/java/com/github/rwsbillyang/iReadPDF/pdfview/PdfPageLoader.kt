@@ -3,25 +3,22 @@ package com.github.rwsbillyang.iReadPDF.pdfview
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.pdf.PdfRenderer
+import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import android.util.Size
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelChildren
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.math.abs
 
 class PdfPageLoader(
     private val pdfRenderer: PdfRenderer,
@@ -75,7 +72,10 @@ class PdfPageLoader(
                 )
                 val cover = CacheManager.defaultCover(ctx, fileId)
                 FileOutputStream(cover).use { fos ->
-                    renderedBitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)
+                    if(Build.VERSION.SDK_INT > 29)
+                        renderedBitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 50, fos)
+                    else
+                        renderedBitmap.compress(Bitmap.CompressFormat.PNG, 50, fos)
                 }
                 pdfPage.close()
                 fd.close()
@@ -99,13 +99,14 @@ class PdfPageLoader(
         page.close()
     }
 
-    suspend fun loadPage(pageNo: Int,  quality: Float) = withContext(Dispatchers.IO) {
+    suspend fun loadPage(pageNo: Int, darkThemeEnabled: Boolean) = withContext(Dispatchers.IO) {
         if (pageNo < 0 || pageNo >= pageCount) {
             Log.w(TAG, "Skipped invalid render for page $pageNo")
             null
         }else{
             val cachedBitmap = cacheManager.getBitmapFromCache(pageNo)
-            if (cachedBitmap != null) {
+
+            val b = if (cachedBitmap != null) {
                 Log.d(TAG, "Page $pageNo loaded from cache")
                 cachedBitmap
             }else{
@@ -113,11 +114,13 @@ class PdfPageLoader(
                     renderJobs[pageNo]?.await()
                 }else{
                     renderJobs[pageNo]?.cancel()
-                    val d = doLoadAndRender(pageNo, quality)
+                    val d = doLoadAndRender(pageNo)
                     renderJobs[pageNo] = d
                     d.await()
                 }
             }
+
+            if(darkThemeEnabled) invert(b) else b
         }
     }
 
@@ -125,7 +128,7 @@ class PdfPageLoader(
     /**
      * quality: (0, 1.0] 渲染质量
      * */
-    private fun doLoadAndRender(page: Int, quality: Float):Deferred<Bitmap?>  {
+    private fun doLoadAndRender(page: Int):Deferred<Bitmap?>  {
         return scope.async {
             //这里，直接t渲染pdfPage的width和heigh大小的renderedBitmap，在Compose的Image中，使用ContentScale.Fit进行缩放适配
 //            val aspectRatio = pageSize.width.toFloat() / pageSize.height.toFloat()
@@ -135,7 +138,7 @@ class PdfPageLoader(
                 //val renderedBitmap = BitmapPool.getBitmap(lazyItemWidth, maxOf(10, height))
                 val pdfPage = pdfRenderer.openPage(page)
                 Log.d(TAG, "pdfRenderer.openPage $page: pdfPage.width=${pdfPage.width}, pdfPage.height=${pdfPage.height}")
-                val renderedBitmap = BitmapPool.getBitmap((pdfPage.width * quality).toInt(), (pdfPage.height * quality).toInt())
+                val renderedBitmap = BitmapPool.getBitmap(pdfPage.width, pdfPage.height)
                 pdfPage.render(
                     renderedBitmap,
                     null,
@@ -163,34 +166,51 @@ class PdfPageLoader(
 
     }
 
+    private fun invert(original: Bitmap?): Bitmap? {
+        if(original == null) return null
+        val inversion = original.copy(Bitmap.Config.ARGB_8888, true)
 
-    private var prefetchJob: Job? = null
+        val width = inversion.width
+        val height = inversion.height
+        val pixels = width * height
+
+        val pixel = IntArray(pixels)
+        inversion.getPixels(pixel, 0, width, 0, 0, width, height)
+
+        for (i in 0 until pixels) pixel[i] = pixel[i] xor 0x00FFFFFF
+        inversion.setPixels(pixel, 0, width, 0, 0, width, height)
+
+        return inversion
+    }
+
+
 
     //lazyColumn已支持pre render从而提前加载
-    fun prefetch(currentPage: Int, quality: Float,  direction: Int) {
-        prefetchJob?.cancel()
-        prefetchJob = scope.launch {
-            delay(100)
-            prefetchPagesAround(currentPage, quality,  direction)
-        }
-    }
-    private suspend fun prefetchPagesAround(currentPage: Int, quality: Float,  direction: Int) {
-        val prefetchDistance = CacheManager.PreFetchDistance
-        val range = when (direction) {
-            1 -> (currentPage + 1)..(currentPage + prefetchDistance)
-            -1 -> (currentPage - prefetchDistance)..<currentPage
-            else -> (currentPage - prefetchDistance)..(currentPage + prefetchDistance)
-        }
-        val sortedPages = range
-            .filter { it in 0 until pageCount }
-            .filter { !cacheManager.pageExistsInCache(it) }
-            .sortedBy { abs(it - currentPage) } // prefer pages close to current page
-
-        sortedPages.forEach { pageNo ->
-            if (renderJobs[pageNo]?.isActive != true) {
-                renderJobs[pageNo]?.cancel()
-                renderJobs[pageNo] = doLoadAndRender(pageNo, quality)
-            }
-        }
-    }
+//    private var prefetchJob: Job? = null
+//    fun prefetch(currentPage: Int, quality: Float,  direction: Int) {
+//        prefetchJob?.cancel()
+//        prefetchJob = scope.launch {
+//            delay(100)
+//            prefetchPagesAround(currentPage, quality,  direction)
+//        }
+//    }
+//    private suspend fun prefetchPagesAround(currentPage: Int, quality: Float,  direction: Int) {
+//        val prefetchDistance = CacheManager.PreFetchDistance
+//        val range = when (direction) {
+//            1 -> (currentPage + 1)..(currentPage + prefetchDistance)
+//            -1 -> (currentPage - prefetchDistance)..<currentPage
+//            else -> (currentPage - prefetchDistance)..(currentPage + prefetchDistance)
+//        }
+//        val sortedPages = range
+//            .filter { it in 0 until pageCount }
+//            .filter { !cacheManager.pageExistsInCache(it) }
+//            .sortedBy { abs(it - currentPage) } // prefer pages close to current page
+//
+//        sortedPages.forEach { pageNo ->
+//            if (renderJobs[pageNo]?.isActive != true) {
+//                renderJobs[pageNo]?.cancel()
+//                renderJobs[pageNo] = doLoadAndRender(pageNo, quality)
+//            }
+//        }
+//    }
 }

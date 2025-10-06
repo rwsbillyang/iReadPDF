@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,13 +23,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.PhotoCamera
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -42,6 +46,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -72,6 +77,7 @@ fun BookShelfToolIcons(){
     val viewModel: MyViewModel = LocalViewModel.current
     val scope = rememberCoroutineScope()
     val dao = db(ctx).dao()
+    val router = useRouter()
 
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenMultipleDocuments(), // OpenDocument()
@@ -84,18 +90,21 @@ fun BookShelfToolIcons(){
         } // 处理选中的 Uri
     )
     Spacer(Modifier.width(8.dp))
-    TextButton(onClick = {
+    IconButton(onClick = {
         filePickerLauncher.launch(arrayOf("application/pdf") )
     }) {
         Icon(Icons.Rounded.Add, contentDescription = "add books")
         //Text("Add Books")
     }
 
-    TextButton(onClick = {
+    IconButton(onClick = {
         viewModel.isEditingShelf.value = !viewModel.isEditingShelf.value
     }) {
         Icon(Icons.Rounded.Edit, contentDescription = "Manage")
         //Text("Manage")
+    }
+    IconButton(onClick = { router.navByName(AppRoutes.Settings) }) {
+        Icon(Icons.Rounded.Settings, contentDescription = "Settings")
     }
 }
 
@@ -148,7 +157,8 @@ fun ScreenBookShelf(call: ScreenCall){
     Box(
         Modifier
             .fillMaxSize()
-            .padding(call.scaffoldPadding)){
+            .padding(call.scaffoldPadding)
+            .background(MaterialTheme.colorScheme.primaryContainer)){
         if(viewModel.shelfList.isNullOrEmpty()){
             val filePickerLauncher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.OpenMultipleDocuments(), // OpenDocument()
@@ -159,10 +169,10 @@ fun ScreenBookShelf(call: ScreenCall){
                 } // 处理选中的 Uri
             )
             Column(Modifier.fillMaxSize(),verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally){
-                TextButton({
+                Button({
                     filePickerLauncher.launch(arrayOf("application/pdf") )
                 }){
-                    Text("Add Books",color = MaterialTheme.colorScheme.primary)
+                    Text("Add Books", Modifier.fillMaxWidth(0.5f), textAlign = TextAlign.Center)
                 }
             }
         }else{
@@ -233,14 +243,22 @@ fun GridItem(b: Book, onDel: (b: Book)->Unit){
          val h = 160
         //去掉文件名称后面的.pdf扩展名（不分大小写），同时文件名称中保留原始大小写
         val name = if(b.name.substringAfterLast('.').lowercase() == "pdf")b.name.substringBeforeLast('.') else b.name
-        Box(Modifier.fillMaxWidth().height(h.dp))//elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(h.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(MaterialTheme.colorScheme.secondaryContainer))//elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
         {
 
             var coverIndex = 1f
             if(viewModel.isEditingShelf.value){
                 coverIndex = 0f
 
-                Row(Modifier.fillMaxWidth().zIndex(1f), Arrangement.SpaceBetween){
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .zIndex(1f), Arrangement.SpaceBetween){
                     IconButton(onClick = {
                         scope.launch {
                             if(b.hasCover == 0){
@@ -276,19 +294,27 @@ fun GridItem(b: Book, onDel: (b: Book)->Unit){
                 BitmapFactory.decodeFile(cover.absolutePath)?.let{
                     Image(
                         it.asImageBitmap(), name,
-                        Modifier.fillMaxSize().zIndex(coverIndex),
+                        Modifier
+                            .fillMaxSize()
+                            .zIndex(coverIndex),
                         Alignment.Center,
                         ContentScale.FillHeight, //保持横宽比
                         //ContentScale.Crop //在较小的手机屏幕上。因pdf页面较大，导致外围不显示，只是显示bitmap的中间部分
                         //ContentScale.FillBounds // 对bitmap进行拉伸填充屏幕，会变形
                     )
                 }
-            }?:Box(Modifier.fillMaxSize().padding(10.dp).zIndex(coverIndex), Alignment.Center){
+            }?:Box(
+                Modifier
+                    .fillMaxSize()
+                    .padding(10.dp)
+                    .zIndex(coverIndex), Alignment.Center){
                 Text(name, style = MaterialTheme.typography.labelSmall ,textAlign = TextAlign.Center, overflow = TextOverflow.Ellipsis, maxLines = 3)
             }
         }
         Text(name,
-            Modifier.fillMaxWidth().height(40.dp),
+            Modifier
+                .fillMaxWidth()
+                .height(40.dp),
             //style = MaterialTheme.typography.labelMedium,
             textAlign = TextAlign.Center,
             lineHeight = 16.sp,

@@ -1,5 +1,6 @@
 package com.github.rwsbillyang.iReadPDF.pdfview
 
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.util.Log
 import androidx.compose.foundation.Image
@@ -49,14 +50,8 @@ fun PdfView(
     modifier: Modifier = Modifier,
     statusCallBack: StatusCallBack? = null
 ) {
- //   val ctx = LocalContext.current
- //   val scope = rememberCoroutineScope()
-   // val viewModel: MyViewModel = LocalViewModel.current
-    // lifecycleOwner: LifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current,
-
     val configuration = LocalConfiguration.current
-    Log.d(TAG, "PdfView: screenWidthDp=${configuration.screenWidthDp}, screenHeightDp=${configuration.screenHeightDp}")
-
+    //Log.d(TAG, "PdfView: screenWidthDp=${configuration.screenWidthDp}, screenHeightDp=${configuration.screenHeightDp}")
 
     //val rotation = mutableFloatStateOf(0f)
     var scale by remember { mutableFloatStateOf(book.zoom)}
@@ -72,18 +67,13 @@ fun PdfView(
         mutableStateOf((lazyItemWidth.value * pdfPageLoader.pageSize.height) / pdfPageLoader.pageSize.width)
     }
 
+    val darkThemeEnabled = Configuration.UI_MODE_NIGHT_YES == configuration.uiMode.and(Configuration.UI_MODE_NIGHT_MASK)
+
     //listen page change
     val listState = rememberLazyListState()
     LaunchedEffect(listState) {
         Log.d(TAG, "requestScrollToItem ${book.page}, pageOffset=${ book.pageOffset}")
         listState.requestScrollToItem(book.page, book.pageOffset)
-
-//        snapshotFlow { listState.firstVisibleItemIndex }
-//            .distinctUntilChanged()
-//            .collect {
-//                Log.d(TAG, "firstVisibleItemIndex=${listState.firstVisibleItemIndex}, listState.firstVisibleItemScrollOffset=${listState.firstVisibleItemScrollOffset}")
-//                statusCallBack?.onPageChanged(listState.firstVisibleItemIndex)
-//            }
 
         snapshotFlow { listState.firstVisibleItemScrollOffset }
             .distinctUntilChanged()
@@ -103,7 +93,7 @@ fun PdfView(
         LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(4.dp), state = listState) {
             items(pdfPageLoader.pageCount, { it.toString() }) { index ->
                 Box(modifier = Modifier.width(lazyItemWidth.value.dp).height(lazyItemHeight.value.dp)){
-                    PdfPage(pdfPageLoader, index)
+                    PdfPage(pdfPageLoader, index, darkThemeEnabled)
                 }
             }
         }
@@ -112,15 +102,14 @@ fun PdfView(
 
 
 @Composable
-fun PdfPage(pdfPageLoader:PdfPageLoader , page: Int) {
+fun PdfPage(pdfPageLoader:PdfPageLoader , page: Int, darkThemeEnabled: Boolean) {
     var loading by remember { mutableStateOf(true) }
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
 
-    //Log.d(TAG, "PdfPage $page")
 
     LaunchedEffect(pdfPageLoader, page) {
         //load page 若缓存中有，从缓存中取出，否则渲染，并加入缓存
-        val cachedBitmap = pdfPageLoader.loadPage(page, 1.0F)
+        val cachedBitmap = pdfPageLoader.loadPage(page,  darkThemeEnabled)
         //Log.d(TAG, "load page $page done!")
         if (cachedBitmap != null) {
             bitmap = cachedBitmap

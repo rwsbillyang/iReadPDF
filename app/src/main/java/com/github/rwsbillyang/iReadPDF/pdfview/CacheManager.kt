@@ -3,6 +3,7 @@ package com.github.rwsbillyang.iReadPDF.pdfview
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.os.Build
 import android.util.Log
 import android.util.LruCache
 
@@ -137,7 +138,10 @@ class CacheManager(
             val savePath = File(cachedPagesDir, pageNo.toString())
             //savePath.parentFile?.mkdirs()
             FileOutputStream(savePath).use { fos ->
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)
+                if(Build.VERSION.SDK_INT > 29)
+                    bitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 50, fos)
+                else
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 50, fos)
             }
         }.onFailure {
             Log.e("CacheManager", "Error writing bitmap to cache (Page $pageNo)", it)

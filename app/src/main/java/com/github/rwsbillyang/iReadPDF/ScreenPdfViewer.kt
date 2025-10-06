@@ -23,19 +23,17 @@ import androidx.compose.material.icons.rounded.Portrait
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -43,17 +41,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
 import com.github.rwsbillyang.composerouter.ScreenCall
 import com.github.rwsbillyang.composerouter.useRouter
 import com.github.rwsbillyang.iReadPDF.AppConstants.TAG
 import com.github.rwsbillyang.iReadPDF.db.Book
 import com.github.rwsbillyang.iReadPDF.pdfview.PdfView
 import com.github.rwsbillyang.iReadPDF.pdfview.StatusCallBack
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @Composable
 fun ToolBarItem(strId: Int, icon: ImageVector, modifier: Modifier, onClick:()->Unit){
@@ -68,8 +61,18 @@ fun ToolBarItem(strId: Int, icon: ImageVector, modifier: Modifier, onClick:()->U
         verticalArrangement = Arrangement.Bottom,
         horizontalAlignment = Alignment.CenterHorizontally)
     {
-        Icon(icon, contentDescription = text, Modifier.fillMaxWidth())
-        Text(text, Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+        Icon(icon, text, Modifier.fillMaxWidth(), MaterialTheme.colorScheme.secondaryContainer)
+
+
+        //MaterialTheme.colorScheme.secondaryContainer: 在黑色模式下，期望字体在白色背景中呈现黑色，结果字体仍是白色，但淡色模式下期望白色正常
+        //TODO：黑白色设置无效，总被系统修改，即使采用如下，不管Black还是White，黑色模式下总是白色
+//        val configuration = LocalConfiguration.current
+//        val darkThemeEnabled = Configuration.UI_MODE_NIGHT_YES == configuration.uiMode.and(
+//            Configuration.UI_MODE_NIGHT_MASK)
+//        val color = if(darkThemeEnabled) Color.Black else Color.White
+//        Log.d(TAG, "darkThemeEnabled=$darkThemeEnabled, color=${color}")
+
+        Text(text, Modifier.fillMaxWidth(), textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.secondaryContainer)
     }
 }
 @Composable
@@ -85,8 +88,7 @@ fun ToolsBar(){
         Modifier
             .fillMaxWidth()
             .height(48.dp)
-            .background(Color.DarkGray)
-            .alpha(0.5f)
+            .background(MaterialTheme.colorScheme.onSecondaryContainer.copy(0.8f))
             .zIndex(1f),
         Arrangement.SpaceAround, Alignment.Bottom){
         val w = Modifier.weight(1f)
@@ -169,7 +171,7 @@ fun ScreenPdfViewer(call: ScreenCall) {
                         offsetChange: Offset,
                         rotationChange: Float
                     ) {
-                        log("onTransformStateChanged: zoomChange=$zoomChange,offsetChange=(${offsetChange.x},${offsetChange.y}), rotationChange=$rotationChange")
+                        //log("onTransformStateChanged: zoomChange=$zoomChange,offsetChange=(${offsetChange.x},${offsetChange.y}), rotationChange=$rotationChange")
 
                         //viewModel.rotation.value += rotationChange
                         viewModel.updateTransformState(zoomChange, offsetChange.x, offsetChange.y)
@@ -186,48 +188,6 @@ fun ScreenPdfViewer(call: ScreenCall) {
 
 
 
-@Composable
-fun FullScreen(call: ScreenCall, children: @Composable ()->Unit){
-    // 协程作用域：用于管理延迟任务
-    val coroutineScope = rememberCoroutineScope()
-    // 保存延迟任务的 Job：用于取消未执行的任务
-    var hideUiJob by remember { mutableStateOf<Job?>(null) }
-    // 当前窗口（可能为 null，需判空）
-    val currentWindow = getCurrentWindow()
-    val isFullScreen = remember { mutableStateOf(false) }
-
-    // 1. 监听全屏状态变化，控制窗口UI
-    // ------------------------------
-    LaunchedEffect(isFullScreen.value) {
-        currentWindow?.let{window ->
-            if (isFullScreen.value) {
-                // 进入全屏：隐藏系统栏（状态栏+导航栏）
-                WindowCompat.setDecorFitsSystemWindows(window, false) // 让内容延伸到系统栏区域
-                WindowCompat.getInsetsController(window, window.decorView).apply {
-                    hide(WindowInsetsCompat.Type.systemBars()) // 隐藏系统栏
-                    //systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE // 滑动边缘唤出系统栏
-                }
-                // 取消之前的“恢复全屏”任务（若有）
-                hideUiJob?.cancel()
-                hideUiJob = null
-            } else {
-                // 退出全屏：显示系统栏
-                WindowCompat.setDecorFitsSystemWindows(window, true) // 内容不延伸到系统栏
-                WindowCompat.getInsetsController(window, window.decorView).apply {
-                    show(WindowInsetsCompat.Type.systemBars()) // 显示系统栏
-                }
-                // 启动5秒后自动恢复全屏的任务
-                hideUiJob = coroutineScope.launch {
-                    delay(5000) // 5秒无操作
-                    isFullScreen.value = true // 切换回全屏
-                }
-            }
-        }
-    }
-    Box(Modifier.fillMaxSize()){
-        children()
-    }
-}
 /**
  * 获取当前 Compose 界面的 Activity 窗口（Window）
  */
