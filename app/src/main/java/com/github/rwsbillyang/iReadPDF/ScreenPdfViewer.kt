@@ -10,14 +10,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.rounded.Adjust
+import androidx.compose.material.icons.rounded.Fullscreen
+import androidx.compose.material.icons.rounded.FullscreenExit
 import androidx.compose.material.icons.rounded.Landscape
 import androidx.compose.material.icons.rounded.Portrait
 import androidx.compose.material.icons.rounded.Settings
@@ -39,8 +43,12 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import com.github.rwsbillyang.composerouter.ScreenCall
 import com.github.rwsbillyang.composerouter.useRouter
 import com.github.rwsbillyang.iReadPDF.AppConstants.TAG
@@ -53,15 +61,15 @@ fun ToolBarItem(strId: Int, icon: ImageVector, modifier: Modifier, onClick:()->U
     val text: String = stringResource(strId)
     Column(
         modifier
-            .height(48.dp)
+            .fillMaxHeight()
             .wrapContentWidth(Alignment.CenterHorizontally)
             .pointerInput(Unit) {
                 detectTapGestures(onTap = { onClick() })
             },
-        verticalArrangement = Arrangement.Bottom,
+        verticalArrangement = Arrangement.SpaceAround,
         horizontalAlignment = Alignment.CenterHorizontally)
     {
-        Icon(icon, text, Modifier.fillMaxWidth(), MaterialTheme.colorScheme.secondaryContainer)
+        Icon(icon, text, Modifier.fillMaxWidth().size(32.dp), MaterialTheme.colorScheme.secondaryContainer)
 
 
         //MaterialTheme.colorScheme.secondaryContainer: 在黑色模式下，期望字体在白色背景中呈现黑色，结果字体仍是白色，但淡色模式下期望白色正常
@@ -72,44 +80,72 @@ fun ToolBarItem(strId: Int, icon: ImageVector, modifier: Modifier, onClick:()->U
 //        val color = if(darkThemeEnabled) Color.Black else Color.White
 //        Log.d(TAG, "darkThemeEnabled=$darkThemeEnabled, color=${color}")
 
-        Text(text, Modifier.fillMaxWidth(), textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.secondaryContainer)
+        //按钮底部文字
+        Text(text, Modifier.fillMaxWidth(), MaterialTheme.colorScheme.secondaryContainer,
+            textAlign = TextAlign.Center,
+            lineHeight = 16.sp,
+            maxLines= 2, minLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.bodySmall)
     }
 }
 @Composable
-fun ToolsBar(){
+fun ToolsBar(hideToolBar: ()-> Unit){
     val viewModel: MyViewModel = LocalViewModel.current
     log("to show tools bar")
-    val b = viewModel.currentBook
+    //val b = viewModel.currentBook
     val router = useRouter()
     val context = LocalContext.current
+    val window = getCurrentWindow()
 
     //zIndex(1f)大者在小者之上
     Row(
         Modifier
             .fillMaxWidth()
-            .height(48.dp)
+            .height(96.dp)
             .background(MaterialTheme.colorScheme.onSecondaryContainer.copy(0.8f))
             .zIndex(1f),
         Arrangement.SpaceAround, Alignment.Bottom){
         val w = Modifier.weight(1f)
 
-        ToolBarItem(R.string.bookshelf, Icons.AutoMirrored.Filled.MenuBook, w){
-            router.navByName(AppRoutes.BookShelf)
-        }
+
         ToolBarItem(R.string.jump, Icons.Rounded.Adjust, w){
             Log.d(TAG, "TODO: jump to page")
+            hideToolBar()
         }
 
-        if(b?.landscape == 1){
+        if(viewModel.currentBook?.landscape == 1){
             ToolBarItem(R.string.portrait, Icons.Rounded.Portrait, w){
                 (context as? Activity)?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                b.landscape = 0
+                viewModel.currentBook?.landscape = 0
+                hideToolBar()
             }
         }else{
             ToolBarItem(R.string.landscape, Icons.Rounded.Landscape, w){
                 (context as? Activity)?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE
-                b?.landscape = 1
+                viewModel.currentBook?.landscape = 1
+                hideToolBar()
             }
+        }
+        if(window != null){
+            if(viewModel.currentBook?.fullScreen == 1){
+                ToolBarItem(R.string.fullscreen_exit, Icons.Rounded.FullscreenExit, w){
+                    window.setFullScreen(false)
+                    viewModel.currentBook?.fullScreen = 0
+                    hideToolBar()
+                }
+            }else{
+                ToolBarItem(R.string.fullscreen, Icons.Rounded.Fullscreen, w){
+                    window.setFullScreen(true)
+                    viewModel.currentBook?.fullScreen = 1
+                    hideToolBar()
+                }
+            }
+        }
+
+
+        ToolBarItem(R.string.bookshelf, Icons.AutoMirrored.Filled.MenuBook, w){
+            router.navByName(AppRoutes.BookShelf)
         }
 
         ToolBarItem(R.string.settings, Icons.Rounded.Settings, w){
@@ -118,6 +154,22 @@ fun ToolsBar(){
     }
 }
 
+fun Window.setFullScreen(enabled: Boolean){
+    if(enabled){
+        // 进入全屏：隐藏系统栏（状态栏+导航栏）
+        WindowCompat.setDecorFitsSystemWindows(this, false) // 让内容延伸到系统栏区域
+        WindowCompat.getInsetsController(this, this.decorView).apply {
+            hide(WindowInsetsCompat.Type.systemBars()) // 隐藏系统栏
+            //systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE // 滑动边缘唤出系统栏
+        }
+    }else{
+        // 退出全屏：显示系统栏
+        WindowCompat.setDecorFitsSystemWindows(this, true) // 内容不延伸到系统栏
+        WindowCompat.getInsetsController(this, this.decorView).apply {
+            show(WindowInsetsCompat.Type.systemBars()) // 显示系统栏
+        }
+    }
+}
 
 @Composable
 fun ScreenPdfViewer(call: ScreenCall) {
@@ -133,13 +185,18 @@ fun ScreenPdfViewer(call: ScreenCall) {
     val viewModel: MyViewModel = LocalViewModel.current
 
     var showToolsBar by remember { mutableStateOf(false) }
+    val window = getCurrentWindow()
 
     LaunchedEffect(currentBook){
         viewModel.onBookMaybeChanged(currentBook, ctx)
+        window?.setFullScreen(currentBook.fullScreen == 1)
     }
 
     if(viewModel.pdfPageLoader == null){
-        Column(Modifier.fillMaxSize().padding(call.scaffoldPadding),
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(call.scaffoldPadding),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -149,16 +206,20 @@ fun ScreenPdfViewer(call: ScreenCall) {
                 Text("Load PDF fail: no file")
         }
     }else{
-        Box(modifier = Modifier.fillMaxSize().padding(call.scaffoldPadding)
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .padding(call.scaffoldPadding)
             .pointerInput(Unit) {
                 detectTapGestures(onTap = { showToolsBar = !showToolsBar })
-            },
-            Alignment.BottomCenter)
+            }, Alignment.Center //若将Toolbar放在底部，全屏后无法正确显示出来（可能布局变化，导致在底部屏幕之外）
+            )
         {
             PdfView(
                 viewModel.pdfPageLoader!!,
                 currentBook,
-                Modifier.fillMaxSize().zIndex(0f),
+                Modifier
+                    .fillMaxSize()
+                    .zIndex(0f),
                 object : StatusCallBack {
                     override fun onPageChanged(currentPage: Int, pageOffset: Int) {
                         //log("onPageChanged: currentPage=$currentPage, pageOffset=$pageOffset")
@@ -171,7 +232,6 @@ fun ScreenPdfViewer(call: ScreenCall) {
                         offsetChange: Offset,
                         rotationChange: Float
                     ) {
-                        //log("onTransformStateChanged: zoomChange=$zoomChange,offsetChange=(${offsetChange.x},${offsetChange.y}), rotationChange=$rotationChange")
 
                         //viewModel.rotation.value += rotationChange
                         viewModel.updateTransformState(zoomChange, offsetChange.x, offsetChange.y)
@@ -180,12 +240,11 @@ fun ScreenPdfViewer(call: ScreenCall) {
             )
 
             if(showToolsBar){
-                ToolsBar()
+                ToolsBar{showToolsBar = false}
             }
         }
     }
 }
-
 
 
 /**

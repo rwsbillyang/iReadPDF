@@ -54,7 +54,7 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
                     color = MaterialTheme.colorScheme.background
                 ) {
                     CompositionLocalProvider(LocalViewModel provides viewModel) {
-                        NavScaffold3(R.string.app_name)//, Modifier, viewModel.isFullScreen.value
+                        NavScaffold3(R.string.app_name)
                     }
                 }
             }
@@ -90,11 +90,8 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
                 dao.updateOne(it)
             }
 
-            //dao.execSQL(SimpleSQLiteQuery("PRAGMA wal_checkpoint;"))
-
-            val count = dao.count()
-            log("db books count: $count")
-
+//            val count = dao.count()
+//            log("db books count: $count")
         }
     }
     private fun handleIntent(intent: Intent) {
@@ -123,6 +120,7 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
                        }else{
                            log("open last read book: $b")
                            this@MainActivity.requestedOrientation = if(b.landscape == 1) ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+
                            localRouter.navByName(AppRoutes.PDFViewer, b)
                        }
                     }?: localRouter.navByName(AppRoutes.BookShelf)

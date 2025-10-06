@@ -36,9 +36,10 @@ class Book(
     val id: String,//  md5(file content)
     val name: String, // file name
     val uriStr: String? = null, //
-    var hasCover: Int = 0, //first page could be cover
     val format: String = "pdf",
 
+    var hasCover: Int = 0, //first page could be cover
+    var fullScreen: Int = 0,
     var page: Int = 0,// current reading page number
     var pageOffset: Int = 0,// listState.firstVisibleItemScrollOffset
     var total: Int? = null, // total pages

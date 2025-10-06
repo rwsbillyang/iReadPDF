@@ -10,4 +10,6 @@
     <string name="landscape">Landscape</string>
     <string name="cancel_cover">Cancel Cover</string>
     <string name="first_page_cover">Auto Cover</string>
+    <string name="fullscreen">Full Screen</string>
+    <string name="fullscreen_exit">Exit Full Screen</string>
 </resources>
