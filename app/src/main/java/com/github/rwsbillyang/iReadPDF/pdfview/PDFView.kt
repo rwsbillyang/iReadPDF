@@ -71,6 +71,7 @@ fun PdfView(
     // 而图片扫描格式的PDF，可正常显示，无需进行位取反，禁用黑色模式，避免位像素进行取反运算
     //对于纸质扫描图片格式的pdf，禁用黑色模式
     val darkThemeEnabled = if(book.disableDarkMode == 1) false else Configuration.UI_MODE_NIGHT_YES == configuration.uiMode.and(Configuration.UI_MODE_NIGHT_MASK)
+    val quality by remember{ mutableStateOf(configuration.densityDpi / 72.0f) }
 
     //listen page change
     val listState = rememberLazyListState()
@@ -96,7 +97,7 @@ fun PdfView(
         LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(4.dp), state = listState) {
             items(pdfPageLoader.pageCount, { it.toString() }) { index ->
                 Box(modifier = Modifier.width(lazyItemWidth.value.dp).height(lazyItemHeight.value.dp)){
-                    PdfPage(pdfPageLoader, index, darkThemeEnabled)
+                    PdfPage(pdfPageLoader, index, quality, darkThemeEnabled)
                 }
             }
         }
@@ -105,14 +106,14 @@ fun PdfView(
 
 
 @Composable
-fun PdfPage(pdfPageLoader:PdfPageLoader , page: Int, darkThemeEnabled: Boolean) {
+fun PdfPage(pdfPageLoader:PdfPageLoader, page: Int, quality: Float, darkThemeEnabled: Boolean) {
     var loading by remember { mutableStateOf(true) }
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
 
 
     LaunchedEffect(pdfPageLoader, page) {
         //load page 若缓存中有，从缓存中取出，否则渲染，并加入缓存
-        val cachedBitmap = pdfPageLoader.loadPage(page,  darkThemeEnabled)
+        val cachedBitmap = pdfPageLoader.loadPage(page,  quality, darkThemeEnabled)
         //Log.d(TAG, "load page $page done!")
         if (cachedBitmap != null) {
             bitmap = cachedBitmap

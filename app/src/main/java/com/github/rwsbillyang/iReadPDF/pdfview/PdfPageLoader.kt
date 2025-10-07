@@ -99,7 +99,7 @@ class PdfPageLoader(
         page.close()
     }
 
-    suspend fun loadPage(pageNo: Int, darkThemeEnabled: Boolean) = withContext(Dispatchers.IO) {
+    suspend fun loadPage(pageNo: Int, quality: Float, darkThemeEnabled: Boolean) = withContext(Dispatchers.IO) {
         if (pageNo < 0 || pageNo >= pageCount) {
             Log.w(TAG, "Skipped invalid render for page $pageNo")
             null
@@ -114,7 +114,7 @@ class PdfPageLoader(
                     renderJobs[pageNo]?.await()
                 }else{
                     renderJobs[pageNo]?.cancel()
-                    val d = doLoadAndRender(pageNo)
+                    val d = doLoadAndRender(pageNo, quality)
                     renderJobs[pageNo] = d
                     d.await()
                 }
@@ -128,7 +128,7 @@ class PdfPageLoader(
     /**
      * quality: (0, 1.0] 渲染质量
      * */
-    private fun doLoadAndRender(page: Int):Deferred<Bitmap?>  {
+    private fun doLoadAndRender(page: Int, quality: Float):Deferred<Bitmap?>  {
         return scope.async {
             //这里，直接t渲染pdfPage的width和heigh大小的renderedBitmap，在Compose的Image中，使用ContentScale.Fit进行缩放适配
 //            val aspectRatio = pageSize.width.toFloat() / pageSize.height.toFloat()
@@ -137,8 +137,8 @@ class PdfPageLoader(
             renderLock.withLock {
                 //val renderedBitmap = BitmapPool.getBitmap(lazyItemWidth, maxOf(10, height))
                 val pdfPage = pdfRenderer.openPage(page)
-                Log.d(TAG, "pdfRenderer.openPage $page: pdfPage.width=${pdfPage.width}, pdfPage.height=${pdfPage.height}")
-                val renderedBitmap = BitmapPool.getBitmap(pdfPage.width, pdfPage.height)
+                Log.d(TAG, "pdfRenderer.openPage $page: pdfPage.width=${pdfPage.width}, pdfPage.height=${pdfPage.height}, quality=$quality")
+                val renderedBitmap = BitmapPool.getBitmap((pdfPage.width * quality).toInt(), (pdfPage.height * quality).toInt())
                 pdfPage.render(
                     renderedBitmap,
                     null,
