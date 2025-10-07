@@ -59,10 +59,7 @@ import com.github.rwsbillyang.iReadPDF.pdfview.StatusCallBack
 @Composable
 fun ToolBarItem(strId: Int, icon: ImageVector, modifier: Modifier, onClick:()->Unit){
     val text: String = stringResource(strId)
-    Column(
-        modifier
-            .fillMaxHeight()
-            .wrapContentWidth(Alignment.CenterHorizontally)
+    Column(modifier.fillMaxHeight().wrapContentWidth(Alignment.CenterHorizontally)
             .pointerInput(Unit) {
                 detectTapGestures(onTap = { onClick() })
             },
@@ -86,7 +83,7 @@ fun ToolBarItem(strId: Int, icon: ImageVector, modifier: Modifier, onClick:()->U
             lineHeight = 16.sp,
             maxLines= 2, minLines = 2,
             overflow = TextOverflow.Ellipsis,
-            style = MaterialTheme.typography.bodySmall)
+            style = MaterialTheme.typography.labelSmall)
     }
 }
 @Composable
@@ -99,15 +96,9 @@ fun ToolsBar(hideToolBar: ()-> Unit){
     val window = getCurrentWindow()
 
     //zIndex(1f)大者在小者之上
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .height(96.dp)
-            .background(MaterialTheme.colorScheme.onSecondaryContainer.copy(0.8f))
-            .zIndex(1f),
+    Row(Modifier.fillMaxWidth().height(96.dp).background(MaterialTheme.colorScheme.onSecondaryContainer.copy(0.8f)).zIndex(1f),
         Arrangement.SpaceAround, Alignment.Bottom){
         val w = Modifier.weight(1f)
-
 
         ToolBarItem(R.string.jump, Icons.Rounded.Adjust, w){
             Log.d(TAG, "TODO: jump to page")
@@ -193,10 +184,7 @@ fun ScreenPdfViewer(call: ScreenCall) {
     }
 
     if(viewModel.pdfPageLoader == null){
-        Column(
-            Modifier
-                .fillMaxSize()
-                .padding(call.scaffoldPadding),
+        Column(Modifier.fillMaxSize().padding(call.scaffoldPadding),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -206,9 +194,7 @@ fun ScreenPdfViewer(call: ScreenCall) {
                 Text("Load PDF fail: no file")
         }
     }else{
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .padding(call.scaffoldPadding)
+        Box(modifier = Modifier.fillMaxSize().padding(call.scaffoldPadding)
             .pointerInput(Unit) {
                 detectTapGestures(onTap = { showToolsBar = !showToolsBar })
             }, Alignment.Center //若将Toolbar放在底部，全屏后无法正确显示出来（可能布局变化，导致在底部屏幕之外）
@@ -217,9 +203,7 @@ fun ScreenPdfViewer(call: ScreenCall) {
             PdfView(
                 viewModel.pdfPageLoader!!,
                 currentBook,
-                Modifier
-                    .fillMaxSize()
-                    .zIndex(0f),
+                Modifier.fillMaxSize().zIndex(0f),
                 object : StatusCallBack {
                     override fun onPageChanged(currentPage: Int, pageOffset: Int) {
                         //log("onPageChanged: currentPage=$currentPage, pageOffset=$pageOffset")

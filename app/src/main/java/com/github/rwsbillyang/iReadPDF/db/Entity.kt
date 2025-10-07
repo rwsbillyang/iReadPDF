@@ -48,6 +48,11 @@ class Book(
     var offsetY: Float = 0.0F, //TransformState offsetChange
     var landscape: Int = 0, //current reading 0: portrait, 1: landscape
     var lastOpen: Long = 0, // last open time, utc
+
+    //对于文字版pdf，黑色模式下其背景色为黑，文字也为黑，故对其bitmap像素进行取反操作，从而文字颜色变白，可以正常阅读
+    // 而图片扫描格式的PDF，可正常显示，无需进行位取反，禁用黑色模式，避免位像素进行取反运算
+    //对于纸质扫描图片格式的pdf，禁用黑色模式 在书架中进行对book进行设置
+    var disableDarkMode: Int = 0 //if 1, disable dark mode
 ) {
     @Ignore
     var cachePages: Boolean = true
