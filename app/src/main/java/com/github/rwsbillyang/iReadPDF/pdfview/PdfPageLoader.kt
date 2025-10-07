@@ -31,6 +31,7 @@ class PdfPageLoader(
 
     var pageCount = 0
     var pageSize = Size(1,1)
+    private var currentPage: PdfRenderer.Page? = null
 
     companion object{
         suspend fun create(fd: ParcelFileDescriptor, fileId: String, ctx: Context, cacheStrategy: CacheStrategy) = withContext(Dispatchers.IO){
@@ -136,18 +137,22 @@ class PdfPageLoader(
 
             renderLock.withLock {
                 //val renderedBitmap = BitmapPool.getBitmap(lazyItemWidth, maxOf(10, height))
-                val pdfPage = pdfRenderer.openPage(page)
-                Log.d(TAG, "pdfRenderer.openPage $page: pdfPage.width=${pdfPage.width}, pdfPage.height=${pdfPage.height}, quality=$quality")
-                val renderedBitmap = BitmapPool.getBitmap((pdfPage.width * quality).toInt(), (pdfPage.height * quality).toInt())
-                pdfPage.render(
-                    renderedBitmap,
-                    null,
-                    null,
-                    PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY
-                )
-                pdfPage.close()
-                cacheManager.addBitmapToCache(page, renderedBitmap)
-                renderedBitmap
+                currentPage = pdfRenderer.openPage(page)
+                currentPage?.let {pdfPage ->
+                    Log.d(TAG, "pdfRenderer.openPage $page: pdfPage.width=${pdfPage.width}, pdfPage.height=${pdfPage.height}, quality=$quality")
+                    val renderedBitmap = BitmapPool.getBitmap((pdfPage.width * quality).toInt(), (pdfPage.height * quality).toInt())
+                    pdfPage.render(
+                        renderedBitmap,
+                        null,
+                        null,
+                        PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY
+                    )
+                    pdfPage.close()
+                    currentPage = null
+                    cacheManager.addBitmapToCache(page, renderedBitmap)
+                    renderedBitmap
+                }
+
             }
         }
     }
@@ -156,7 +161,8 @@ class PdfPageLoader(
         Log.d(TAG, "Closing PdfRenderer and releasing resources.")
 
         scope.coroutineContext.cancelChildren()
-        //closeAllOpenPages()
+        currentPage?.close()
+        currentPage = null
 
         runCatching { pdfRenderer.close() }
             .onFailure { Log.e(TAG, "Error closing PdfRenderer: ${it.message}", it) }

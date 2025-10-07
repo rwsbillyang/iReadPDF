@@ -13,8 +13,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.lifecycle.lifecycleScope
-import androidx.sqlite.db.SimpleSQLiteQuery
 import com.github.rwsbillyang.composerouter.nav.LocalRoutableActivity
 import com.github.rwsbillyang.composerouter.nav.NavScaffold3
 import com.github.rwsbillyang.iReadPDF.db.Book
@@ -22,9 +23,9 @@ import com.github.rwsbillyang.iReadPDF.db.db
 import com.github.rwsbillyang.iReadPDF.db.syncDb
 import com.github.rwsbillyang.iReadPDF.pdfview.FileUtil
 import com.github.rwsbillyang.iReadPDF.ui.theme.MyAppTheme
-import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import java.io.FileOutputStream
+
 
 
 //https://developer.android.google.cn/jetpack/compose/compositionlocal?hl=zh-cn
@@ -112,18 +113,23 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
                 val dao = db(this).dao()
                 // 打开last reading book
                 lifecycleScope.launch {
-                    val sharedPreferences = getSharedPreferences("iRead", Context.MODE_PRIVATE)
-                    sharedPreferences.getString(AppConstants.KEY_CURRENT, null)?.let{
-                       val b = dao.findOne(it)
-                       if(b == null){
-                           localRouter.navByName(AppRoutes.BookShelf)
-                       }else{
-                           log("open last read book: $b")
-                           this@MainActivity.requestedOrientation = if(b.landscape == 1) ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                    initSettingsValue(viewModel)
+                    if(viewModel.enterBookDirectly){
+                        val sharedPreferences = getSharedPreferences("iRead", Context.MODE_PRIVATE)
+                        sharedPreferences.getString(AppConstants.KEY_CURRENT, null)?.let{
+                            val b = dao.findOne(it)
+                            if(b == null){
+                                localRouter.navByName(AppRoutes.BookShelf)
+                            }else{
+                                log("open last read book: $b")
+                                this@MainActivity.requestedOrientation = if(b.landscape == 1) ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
-                           localRouter.navByName(AppRoutes.PDFViewer, b)
-                       }
-                    }?: localRouter.navByName(AppRoutes.BookShelf)
+                                localRouter.navByName(AppRoutes.PDFViewer, b)
+                            }
+                        }?: localRouter.navByName(AppRoutes.BookShelf)
+                    }else{
+                        localRouter.navByName(AppRoutes.BookShelf)
+                    }
                 }
             }
         }
@@ -131,7 +137,7 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
 
     private fun jumpToTmpBook(uri: Uri){
         val ctx = this
-        MainScope().launch {
+        lifecycleScope.launch {
             val id = FileUtil.calculateMd5(ctx, uri)//view model中创建PdfPageLoader通过uri打开，而不是file打开
             if(id != null){
                 val originalFileName = FileUtil.getFileNameFromUri(ctx, uri) ?: "unknown.pdf"
@@ -140,16 +146,15 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
                 }
                 localRouter.navByName(AppRoutes.PDFViewer, tmpBook)
             }
+            initSettingsValue(viewModel)
         }
     }
 
-//    private fun initSettingsValue(ctx: Context, viewModel: MyViewModel){
-//        this.lifecycleScope.launch {
-//            val p = dataStore.data.first()
-////            viewModel.enableZheng14.value = p[booleanPreferencesKey(SettingsKey.Zheng14)]?:true
-////            viewModel.enableFuZuo.value = p[booleanPreferencesKey(SettingsKey.FuZuo)]?:true
-//        }
-//    }
+    private suspend fun initSettingsValue(viewModel: MyViewModel){
+        val p = dataStore.data.first()
+        viewModel.enterBookDirectly = p[booleanPreferencesKey(AppConstants.SettingsKey.EnterBookDirectly)]?:false
+        viewModel.quality.value = p[stringPreferencesKey(AppConstants.SettingsKey.Quality)]?.let{ PdfQuality.valueOf(it)}?: PdfQuality.Middle
+    }
 
 
 }

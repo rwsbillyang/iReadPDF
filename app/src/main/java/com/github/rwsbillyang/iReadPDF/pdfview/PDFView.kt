@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
+import com.github.rwsbillyang.iReadPDF.PdfQuality
 import com.github.rwsbillyang.iReadPDF.db.Book
 import kotlinx.coroutines.flow.distinctUntilChanged
 
@@ -48,6 +49,7 @@ fun PdfView(
     pdfPageLoader: PdfPageLoader,
     book: Book,
     modifier: Modifier = Modifier,
+    pdfQuality: PdfQuality,
     statusCallBack: StatusCallBack? = null
 ) {
     val configuration = LocalConfiguration.current
@@ -71,7 +73,13 @@ fun PdfView(
     // 而图片扫描格式的PDF，可正常显示，无需进行位取反，禁用黑色模式，避免位像素进行取反运算
     //对于纸质扫描图片格式的pdf，禁用黑色模式
     val darkThemeEnabled = if(book.disableDarkMode == 1) false else Configuration.UI_MODE_NIGHT_YES == configuration.uiMode.and(Configuration.UI_MODE_NIGHT_MASK)
-    val quality by remember{ mutableStateOf(configuration.densityDpi / 72.0f) }
+    val quality by remember(pdfQuality){ mutableStateOf(
+        when(pdfQuality){
+            PdfQuality.Low -> 1.0f
+            PdfQuality.Middle -> configuration.densityDpi / (2*72.0f)
+            PdfQuality.High -> configuration.densityDpi / 72.0f
+        }
+    ) }
 
     //listen page change
     val listState = rememberLazyListState()

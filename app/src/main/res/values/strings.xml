@@ -20,4 +20,11 @@
 
     <string name="fullscreen">Full Screen</string>
     <string name="fullscreen_exit">Exit Full Screen</string>
+
+    <string name="enter_book">Enter Book Directly</string>
+    <string name="enter_book_desc">Enter the book of reading last time directly</string>
+    <string name="quality">PDF Quality</string>
+    <string name="quality_h">High</string>
+    <string name="quality_m">Middle</string>
+    <string name="quality_l">Low</string>
 </resources>

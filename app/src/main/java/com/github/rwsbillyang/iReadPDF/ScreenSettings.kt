@@ -13,8 +13,12 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.jamal.composeprefs3.ui.PrefsScreen
+import com.jamal.composeprefs3.ui.prefs.CheckBoxPref
+import com.jamal.composeprefs3.ui.prefs.DropDownPref
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+
+enum class PdfQuality(val id: Int){Low(R.string.quality_l), Middle(R.string.quality_m), High(R.string.quality_h),}
 
 @Composable
 fun SettingsScreen(paddingValues: PaddingValues) {
@@ -23,27 +27,27 @@ fun SettingsScreen(paddingValues: PaddingValues) {
     val groupName = stringResource(id = R.string.settings)
     PrefsScreen(dataStore = LocalContext.current.dataStore, modifier = Modifier.padding(paddingValues)) {
 
-//        prefsGroup(groupNameYun) {
-//            prefsItem{
-//                CheckBoxPref(key = SettingsKey.XiaoXian,
-//                    title = "小限",
-//                    summary = "是否展示小限运盘",
-//                    defaultChecked = false,
-//                    onCheckedChange = {v-> viewModel.enableXiaoXianYun.value = v},
-//                    enabled = true)
-//            }
-//            prefsItem{
-//                DropDownPref(
-//                    key = SettingsKey.LeapModeLiuPan,
-//                    title = "流盘闰月",
-//                    useSelectedAsSummary = true,
-//                    entries = LunarLeapMonthAdjustMode.values().associate { Pair(it.name, it.label) },
-//                    defaultValue = LunarLeapMonthAdjustMode.Half.name,
-//                    onValueChange = {
-//                        viewModel.leapModeMonthLiuPan.value = LunarLeapMonthAdjustMode.valueOf(it)
-//                    }
-//                )
-//            }
-//        }
+        prefsGroup(groupName) {
+            prefsItem{
+                CheckBoxPref(key = AppConstants.SettingsKey.EnterBookDirectly,
+                    title = stringResource(id = R.string.enter_book),
+                    summary = stringResource(id = R.string.enter_book_desc),
+                    defaultChecked = false,
+                    onCheckedChange = {v-> viewModel.enterBookDirectly},
+                    enabled = true)
+            }
+            prefsItem{
+                DropDownPref(
+                    key = AppConstants.SettingsKey.Quality,
+                    title = stringResource(id = R.string.quality),
+                    useSelectedAsSummary = true,
+                    entries = PdfQuality.values().associate { Pair(it.name, stringResource(id = it.id)) },
+                    defaultValue = PdfQuality.Middle.name,
+                    onValueChange = {
+                        viewModel.quality.value = PdfQuality.valueOf(it)
+                    }
+                )
+            }
+        }
     }
 }

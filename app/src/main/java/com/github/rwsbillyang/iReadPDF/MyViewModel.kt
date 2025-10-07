@@ -15,8 +15,6 @@ import com.github.rwsbillyang.iReadPDF.pdfview.TAG
 
 
 class MyViewModel: ViewModel(){
-    val isFullScreen = mutableStateOf(false)
-
     val shelfList = mutableStateListOf<Book>()
     var isEditingShelf = mutableStateOf(false)
     var shelfListLoaded = false
@@ -88,12 +86,9 @@ class MyViewModel: ViewModel(){
         shelfListLoaded = false
     }
 
-    //val lazyItemWidth = mutableStateOf(10)
-    //val lazyItemHeight = mutableStateOf(10)
 
-    //val scale = mutableFloatStateOf(1f)
-    //val offset = mutableStateOf(Offset.Zero)
-    //val rotation = mutableFloatStateOf(0f)
-
+    //settings
+    var enterBookDirectly = false
+    val quality = mutableStateOf(PdfQuality.Middle)
 
 }

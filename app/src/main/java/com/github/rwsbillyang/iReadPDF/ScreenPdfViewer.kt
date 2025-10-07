@@ -204,6 +204,7 @@ fun ScreenPdfViewer(call: ScreenCall) {
                 viewModel.pdfPageLoader!!,
                 currentBook,
                 Modifier.fillMaxSize().zIndex(0f),
+                viewModel.quality.value,
                 object : StatusCallBack {
                     override fun onPageChanged(currentPage: Int, pageOffset: Int) {
                         //log("onPageChanged: currentPage=$currentPage, pageOffset=$pageOffset")

@@ -5,13 +5,21 @@ import android.util.Log
 import java.time.format.DateTimeFormatter
 
 fun log(str: String) {
-    if(AppConstants.DebugRender) Log.d(AppConstants.TAG, str)
+    if (AppConstants.DebugRender) Log.d(AppConstants.TAG, str)
 }
+
 object AppConstants {
     const val DebugRender = true
     const val TAG = "MyAPP"
 
-    const val KEY_CURRENT= "current"
+    const val KEY_CURRENT = "current"
+
+    object SettingsKey {
+        const val EnterBookDirectly = "EnterBookDirectly"
+        const val Quality = "Quality"
+
+
+    }
 
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 }
