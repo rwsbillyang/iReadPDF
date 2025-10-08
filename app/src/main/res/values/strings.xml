@@ -19,7 +19,7 @@
     <string name="del_desc">Are your sure to delete from book shelf？You can re-add it.</string>
 
     <string name="fullscreen">Full Screen</string>
-    <string name="fullscreen_exit">Exit Full Screen</string>
+    <string name="fullscreen_exit">Exit FullScreen</string>
 
     <string name="enter_book">Enter Book Directly</string>
     <string name="enter_book_desc">Enter the book of reading last time directly</string>

@@ -6,6 +6,8 @@ import android.util.Log
 import android.view.Window
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,14 +34,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -47,14 +53,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
+
 import com.github.rwsbillyang.composerouter.ScreenCall
 import com.github.rwsbillyang.composerouter.useRouter
 import com.github.rwsbillyang.iReadPDF.AppConstants.TAG
 import com.github.rwsbillyang.iReadPDF.db.Book
 import com.github.rwsbillyang.iReadPDF.pdfview.PdfView
 import com.github.rwsbillyang.iReadPDF.pdfview.StatusCallBack
+import com.github.rwsbillyang.iReadPDF.pdfview.setFullScreen
+import com.github.rwsbillyang.iReadPDF.pdfview.setLandscape
+
 
 @Composable
 fun ToolBarItem(strId: Int, icon: ImageVector, modifier: Modifier, onClick:()->Unit){
@@ -89,14 +97,20 @@ fun ToolBarItem(strId: Int, icon: ImageVector, modifier: Modifier, onClick:()->U
 @Composable
 fun ToolsBar(hideToolBar: ()-> Unit){
     val viewModel: MyViewModel = LocalViewModel.current
-    log("to show tools bar")
-    //val b = viewModel.currentBook
+    val b = viewModel.currentBook
+    if(b == null)
+    {
+        log("to show tools bar: no book yet, ignore")
+        return
+    }
     val router = useRouter()
     val context = LocalContext.current
     val window = getCurrentWindow()
 
     //zIndex(1f)大者在小者之上
-    Row(Modifier.fillMaxWidth().height(96.dp).background(MaterialTheme.colorScheme.onSecondaryContainer.copy(0.8f)).zIndex(1f),
+    Row(Modifier.fillMaxWidth().height(96.dp).graphicsLayer(
+        rotationZ = b.rotation.toFloat()//toolbar跟随旋转
+    ).background(MaterialTheme.colorScheme.onSecondaryContainer.copy(0.8f)).zIndex(1f),
         Arrangement.SpaceAround, Alignment.Bottom){
         val w = Modifier.weight(1f)
 
@@ -105,30 +119,43 @@ fun ToolsBar(hideToolBar: ()-> Unit){
             hideToolBar()
         }
 
-        if(viewModel.currentBook?.landscape == 1){
+//        if(b.landscape == 1){
+//            ToolBarItem(R.string.portrait, Icons.Rounded.Portrait, w){
+//                b.landscape = 0
+//                (context as? Activity)?.setLandscape(0)
+//                hideToolBar()
+//            }
+//        }else{
+//            ToolBarItem(R.string.landscape, Icons.Rounded.Landscape, w){
+//                //b.landscape = 1
+//                (context as? Activity)?.setLandscape(1)
+//                hideToolBar()
+//            }
+//        }
+
+        if(b.rotation != 0){
             ToolBarItem(R.string.portrait, Icons.Rounded.Portrait, w){
-                (context as? Activity)?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                viewModel.currentBook?.landscape = 0
+                b.rotation = 0
                 hideToolBar()
             }
         }else{
             ToolBarItem(R.string.landscape, Icons.Rounded.Landscape, w){
-                (context as? Activity)?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE
-                viewModel.currentBook?.landscape = 1
+                b.rotation = 90
                 hideToolBar()
             }
         }
+
         if(window != null){
-            if(viewModel.currentBook?.fullScreen == 1){
+            if(b.fullScreen == 1){
                 ToolBarItem(R.string.fullscreen_exit, Icons.Rounded.FullscreenExit, w){
+                    b.fullScreen = 0
                     window.setFullScreen(false)
-                    viewModel.currentBook?.fullScreen = 0
                     hideToolBar()
                 }
             }else{
                 ToolBarItem(R.string.fullscreen, Icons.Rounded.Fullscreen, w){
+                    b.fullScreen = 1
                     window.setFullScreen(true)
-                    viewModel.currentBook?.fullScreen = 1
                     hideToolBar()
                 }
             }
@@ -145,27 +172,12 @@ fun ToolsBar(hideToolBar: ()-> Unit){
     }
 }
 
-fun Window.setFullScreen(enabled: Boolean){
-    if(enabled){
-        // 进入全屏：隐藏系统栏（状态栏+导航栏）
-        WindowCompat.setDecorFitsSystemWindows(this, false) // 让内容延伸到系统栏区域
-        WindowCompat.getInsetsController(this, this.decorView).apply {
-            hide(WindowInsetsCompat.Type.systemBars()) // 隐藏系统栏
-            //systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE // 滑动边缘唤出系统栏
-        }
-    }else{
-        // 退出全屏：显示系统栏
-        WindowCompat.setDecorFitsSystemWindows(this, true) // 内容不延伸到系统栏
-        WindowCompat.getInsetsController(this, this.decorView).apply {
-            show(WindowInsetsCompat.Type.systemBars()) // 显示系统栏
-        }
-    }
-}
+
 
 @Composable
 fun ScreenPdfViewer(call: ScreenCall) {
-    val currentBook: Book? = call.props as? Book
-    if(currentBook == null){
+    val book: Book? = call.props as? Book
+    if(book == null){
         Column(Modifier.fillMaxSize(),verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally){
             Text("no book to open")
         }
@@ -178,9 +190,11 @@ fun ScreenPdfViewer(call: ScreenCall) {
     var showToolsBar by remember { mutableStateOf(false) }
     val window = getCurrentWindow()
 
-    LaunchedEffect(currentBook){
-        viewModel.onBookMaybeChanged(currentBook, ctx)
-        window?.setFullScreen(currentBook.fullScreen == 1)
+    LaunchedEffect(book){
+        viewModel.onBookMaybeChanged(book, ctx)
+
+        window?.setFullScreen(book.fullScreen == 1)
+        (ctx as? Activity)?.setLandscape(book.landscape)
     }
 
     if(viewModel.pdfPageLoader == null){
@@ -194,34 +208,46 @@ fun ScreenPdfViewer(call: ScreenCall) {
                 Text("Load PDF fail: no file")
         }
     }else{
+        val statusCallBack = object : StatusCallBack {
+            override fun onPageChanged(currentPage: Int, pageOffset: Int) {
+                log("onPageChanged: currentPage=$currentPage, pageOffset=$pageOffset")
+                book.page = currentPage
+                book.pageOffset = pageOffset
+            }
+            override fun onTransformStateChanged(zoomChange: Float, offsetChange: Offset, rotationChange: Float) {
+                viewModel.updateTransformState(zoomChange, offsetChange.x, offsetChange.y)
+            }
+        }
+
+
         Box(modifier = Modifier.fillMaxSize().padding(call.scaffoldPadding)
-            .pointerInput(Unit) {
-                detectTapGestures(onTap = { showToolsBar = !showToolsBar })
-            }, Alignment.Center //若将Toolbar放在底部，全屏后无法正确显示出来（可能布局变化，导致在底部屏幕之外）
-            )
+            .pointerInput(Unit) { detectTapGestures(onTap = { showToolsBar = !showToolsBar }) }
+            .layout { measurable, constraints ->
+                //若旋转90度，对宽高进行置换
+                val newConstraints = if(book.rotation == 90 || book.rotation == -90 || book.rotation == 270){
+                    constraints.copy(
+                        minWidth = constraints.minHeight,
+                        maxWidth = constraints.maxHeight,
+                        minHeight = constraints.minWidth,
+                        maxHeight = constraints.maxWidth)
+                }else{ constraints }
+
+                //measurable代表着"具备可测量能力的"，即当前的box，经过measure之后，得到一个"具备可置放能力的"placeable
+                val placeable = measurable.measure(newConstraints)
+                //log("layout: rotation=${book.rotation},constraints:minWidth=${constraints.minWidth}, maxWidth=${constraints.maxWidth}, minHeight=${constraints.minHeight}, maxHeight=${constraints.maxHeight}, placeable.width=${placeable.width}, placeable.height=${placeable.height}")
+
+                //根据placeable中的置放数据，进行layout后，返回MeasureResult对组件进行重新布局layout
+                layout(placeable.width, placeable.height){ placeable.placeRelative(0,0) } }
+
+            ,Alignment.Center //若将Toolbar放在底部，全屏后无法正确显示出来（可能布局变化，导致在底部屏幕之外）
+        )
         {
             PdfView(
                 viewModel.pdfPageLoader!!,
-                currentBook,
+                book,
                 Modifier.fillMaxSize().zIndex(0f),
                 viewModel.quality.value,
-                object : StatusCallBack {
-                    override fun onPageChanged(currentPage: Int, pageOffset: Int) {
-                        //log("onPageChanged: currentPage=$currentPage, pageOffset=$pageOffset")
-                        currentBook.page = currentPage
-                        currentBook.pageOffset = pageOffset
-                    }
-
-                    override fun onTransformStateChanged(
-                        zoomChange: Float,
-                        offsetChange: Offset,
-                        rotationChange: Float
-                    ) {
-
-                        //viewModel.rotation.value += rotationChange
-                        viewModel.updateTransformState(zoomChange, offsetChange.x, offsetChange.y)
-                    }
-                }
+                statusCallBack
             )
 
             if(showToolsBar){
@@ -246,11 +272,11 @@ fun getCurrentWindow(): Window? {
 }
 //import com.github.barteksc.pdfviewer.PDFView
 //@Composable
-//fun PDFViewWrapper(viewModel: MyViewModel, currentBook: Book){
+//fun PDFViewWrapper(viewModel: MyViewModel, book: Book){
 //    val context = LocalContext.current
-//    DisposableEffect(currentBook) {
+//    DisposableEffect(book) {
 //        viewModel.pdfView.value = PDFView(context, null).apply {
-//            myInit(currentBook, viewModel).loadPages()
+//            myInit(book, viewModel).loadPages()
 //        }
 //
 //        onDispose {
@@ -265,13 +291,13 @@ fun getCurrentWindow(): Window? {
 //        )
 //    }
 //}
-//fun PDFView.myInit(currentBook: Book, viewModel: MyViewModel): PDFView {
+//fun PDFView.myInit(book: Book, viewModel: MyViewModel): PDFView {
 //    //.pages(0, 2, 1, 3, 3, 3) // all pages are displayed by default
-//    fromUri(currentBook.uri)
-//        .defaultPage(currentBook.page)
+//    fromUri(book.uri)
+//        .defaultPage(book.page)
 //        .enableSwipe(true) // allows to block changing pages using swipe
 //        .enableDoubletap(true)
-//        .swipeHorizontal(currentBook.landscape == 0) // 横屏垂直滚动，竖屏水平滚动？
+//        .swipeHorizontal(book.landscape == 0) // 横屏垂直滚动，竖屏水平滚动？
 //        //.scrollHandle(DefaultScrollHandle(ctx)) // eg. 自定义滚动手柄，用于显示阅读进度
 //        .pageFitPolicy(FitPolicy.WIDTH) // mode to fit pages in the view
 //        .fitEachPage(false) // fit each page to the view, else smaller pages are scaled relative to largest page.
@@ -287,12 +313,12 @@ fun getCurrentWindow(): Window? {
 //        .onLoad { nbPages ->
 //            viewModel.isLoadingFile.value = false
 //            viewModel.updateTotalPages(nbPages)
-//            zoomTo(currentBook.zoom)
-//            jumpTo(currentBook.page)
+//            zoomTo(book.zoom)
+//            jumpTo(book.page)
 //
 //            // 延迟恢复滚动位置（等待布局完成）
 //            postDelayed({
-//                scrollTo(currentBook.scrollX, currentBook.scrollY)
+//                scrollTo(book.scrollX, book.scrollY)
 //            }, 300)
 //        }
 //        .onRender {

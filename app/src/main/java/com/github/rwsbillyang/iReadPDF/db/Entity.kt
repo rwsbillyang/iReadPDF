@@ -43,10 +43,15 @@ class Book(
     var page: Int = 0,// current reading page number
     var pageOffset: Int = 0,// listState.firstVisibleItemScrollOffset
     var total: Int? = null, // total pages
-    var zoom: Float = 1.0f, //current reading zoom level
+    var zoom: Float = 1.0f, //TransformState current reading zoom level
     var offsetX: Float = 0.0F, //TransformState offsetChange
     var offsetY: Float = 0.0F, //TransformState offsetChange
-    var landscape: Int = 0, //current reading 0: portrait, 1: landscape
+    var rotation: Int = 0, //TransformState 但由工具栏命令控制
+
+    //设置orientation时引起configuration变化，横屏时将导致book shelf, settings等的变化，以及路由的恢复，
+    //故放弃此种，采用rotation旋转90度
+    @Deprecated("use rotation instead") var landscape: Int = 0, //current reading 0: portrait, 1: landscape
+
     var lastOpen: Long = 0, // last open time, utc
 
     //对于文字版pdf，黑色模式下其背景色为黑，文字也为黑，故对其bitmap像素进行取反操作，从而文字颜色变白，可以正常阅读

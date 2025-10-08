@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,7 +30,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -37,6 +37,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import com.github.rwsbillyang.iReadPDF.PdfQuality
 import com.github.rwsbillyang.iReadPDF.db.Book
+import com.github.rwsbillyang.iReadPDF.log
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 internal const val TAG = "MyApp"
@@ -53,21 +54,6 @@ fun PdfView(
     statusCallBack: StatusCallBack? = null
 ) {
     val configuration = LocalConfiguration.current
-    //Log.d(TAG, "PdfView: screenWidthDp=${configuration.screenWidthDp}, screenHeightDp=${configuration.screenHeightDp}")
-
-    //val rotation = mutableFloatStateOf(0f)
-    var scale by remember { mutableFloatStateOf(book.zoom)}
-    var offset by remember { mutableStateOf(Offset(book.offsetX, book.offsetY))}
-    val transformableState  = rememberTransformableState { zoomChange, offsetChange, rotationChange ->
-        scale *= zoomChange
-        offset += offsetChange
-        statusCallBack?.onTransformStateChanged(zoomChange, offsetChange, rotationChange) ?: Log.w(TAG, "not save zoomChange=$zoomChange, offsetChange=$offsetChange, rotationChange=$rotationChange")
-    }
-
-    val lazyItemWidth = remember { mutableStateOf(configuration.screenWidthDp) }
-    val lazyItemHeight = remember(pdfPageLoader.pageSize) {
-        mutableStateOf((lazyItemWidth.value * pdfPageLoader.pageSize.height) / pdfPageLoader.pageSize.width)
-    }
 
     //对于文字版pdf，黑色模式下其背景色为黑，文字也为黑，故对其bitmap像素进行取反操作，从而文字颜色变白，可以正常阅读
     // 而图片扫描格式的PDF，可正常显示，无需进行位取反，禁用黑色模式，避免位像素进行取反运算
@@ -95,18 +81,36 @@ fun PdfView(
             }
     }
 
-    Box(modifier.graphicsLayer(
+    val lazyItemWidth = remember(book.rotation) {mutableStateOf(if(book.rotation == 0) configuration.screenWidthDp else configuration.screenHeightDp)}
+    val lazyItemHeight = remember(lazyItemWidth.value, pdfPageLoader.pageSize.width, pdfPageLoader.pageSize.height) {
+        mutableStateOf((lazyItemWidth.value * pdfPageLoader.pageSize.height) / pdfPageLoader.pageSize.width)
+    }
+    //Log.d(TAG, "lazyItemWidth=${lazyItemWidth.value}, lazyItemHeight=${lazyItemHeight.value}")
+
+    var scale by remember { mutableFloatStateOf(book.zoom) }
+    var offset by remember { mutableStateOf(Offset(book.offsetX, book.offsetY))}
+    val transformableState  = rememberTransformableState { zoomChange, offsetChange, rotationChange ->
+        scale *= zoomChange
+        val newOffset = if(book.rotation == 90 || book.rotation == -90 || book.rotation == 270){
+            Offset(-offsetChange.y, offsetChange.x)
+        }else offsetChange
+        offset += newOffset
+        statusCallBack?.onTransformStateChanged(zoomChange, newOffset, rotationChange)
+
+        log("zoomChange=$zoomChange, offsetChange=$offsetChange, rotationChange=$rotationChange")
+    }
+
+    LazyColumn(modifier.fillMaxSize().graphicsLayer(
         scaleX = scale,
         scaleY = scale,
-        //rotationZ = viewModel.rotation.value,
+        rotationZ = book.rotation.toFloat(),
         translationX = offset.x,
-        translationY = offset.y,
-    ).transformable(state = transformableState)) {
-        LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(4.dp), state = listState) {
-            items(pdfPageLoader.pageCount, { it.toString() }) { index ->
-                Box(modifier = Modifier.width(lazyItemWidth.value.dp).height(lazyItemHeight.value.dp)){
-                    PdfPage(pdfPageLoader, index, quality, darkThemeEnabled)
-                }
+        translationY = offset.y).background(MaterialTheme.colorScheme.surfaceVariant)
+        .transformable(state = transformableState)
+        , listState, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        items(pdfPageLoader.pageCount, { it.toString() }) { index ->
+            Box(modifier = Modifier.width(lazyItemWidth.value.dp).height(lazyItemHeight.value.dp)){
+                PdfPage(pdfPageLoader, index, quality, darkThemeEnabled)
             }
         }
     }
@@ -131,11 +135,8 @@ fun PdfPage(pdfPageLoader:PdfPageLoader, page: Int, quality: Float, darkThemeEna
 
 
     if (loading) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Row(Modifier.fillMaxSize(), Arrangement.Center, Alignment.CenterVertically)
+        {
             CircularProgressIndicator() // 圆形进度条
             Text("loading page $page ")
         }
@@ -148,11 +149,8 @@ fun PdfPage(pdfPageLoader:PdfPageLoader, page: Int, quality: Float, darkThemeEna
                 //ContentScale.Crop //在较小的手机屏幕上。因pdf页面较大，导致外围不显示，只是显示bitmap的中间部分
                 //ContentScale.FillBounds // 对bitmap进行拉伸填充屏幕，会变形
             ) //ContentScale.Fit ContentScale.FitWidth ContentScale.FitHeight
-        }?:Column(
-            Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        }?:Column(Modifier.fillMaxSize(), Arrangement.Center, Alignment.CenterHorizontally)
+        {
             Text("something wrong")
         }
     }

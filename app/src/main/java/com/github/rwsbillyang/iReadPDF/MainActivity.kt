@@ -2,7 +2,6 @@ package com.github.rwsbillyang.iReadPDF
 
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.compose.setContent
@@ -22,6 +21,7 @@ import com.github.rwsbillyang.iReadPDF.db.Book
 import com.github.rwsbillyang.iReadPDF.db.db
 import com.github.rwsbillyang.iReadPDF.db.syncDb
 import com.github.rwsbillyang.iReadPDF.pdfview.FileUtil
+import com.github.rwsbillyang.iReadPDF.pdfview.setLandscape
 import com.github.rwsbillyang.iReadPDF.ui.theme.MyAppTheme
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -46,7 +46,7 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        destroyByUser = true
         setContent {
             MyAppTheme {
                 // A surface container using the 'background' color from the theme
@@ -71,14 +71,29 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
     override fun onDestroy() {
         super.onDestroy()
         //saveCurrentBook()
-        log("onDestroy, releasePdfLoader and shelf list")
-        viewModel.releasePdfLoader()
-        viewModel.releaseShelfList()
+        log("onDestroy, releasePdfLoader and shelf list, destroyByUser=$destroyByUser")
+        if(destroyByUser){
+            //若是configuration变化导致，不可release，只有back不再前台了则需release
+            viewModel.releasePdfLoader()
+            viewModel.releaseShelfList()
+        }
+
         syncDb(this)
     }
 
-    private fun saveCurrentBook(){
+    private var destroyByUser = true
 
+    //在系统未经用户许可可能销毁 Activity 时调用的方法。
+    // 需要注意的是，如果用户主动销毁 Activity（例如按下返回键），则不会调用此方法。
+    //调用fileLauncher打开文件添加书籍时会调用此方法
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        log("onSaveInstanceState, set destroyByUser = false")
+        destroyByUser = false
+    }
+
+
+    private fun saveCurrentBook(){
         val dao = db(this).dao()
         // 保存当前阅读进度
         lifecycleScope.launch {
@@ -111,6 +126,7 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
             }
             else -> {
                 val dao = db(this).dao()
+                val localRouter = router
                 // 打开last reading book
                 lifecycleScope.launch {
                     initSettingsValue(viewModel)
@@ -122,7 +138,7 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
                                 localRouter.navByName(AppRoutes.BookShelf)
                             }else{
                                 log("open last read book: $b")
-                                this@MainActivity.requestedOrientation = if(b.landscape == 1) ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                                //this@MainActivity.setLandscape(b.landscape)
 
                                 localRouter.navByName(AppRoutes.PDFViewer, b)
                             }
@@ -144,7 +160,7 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
                 val tmpBook = Book(id, originalFileName, uri.toString()).apply {
                     cachePages = false //临时打开的pdf不缓存其页面
                 }
-                localRouter.navByName(AppRoutes.PDFViewer, tmpBook)
+                router.navByName(AppRoutes.PDFViewer, tmpBook)
             }
             initSettingsValue(viewModel)
         }
