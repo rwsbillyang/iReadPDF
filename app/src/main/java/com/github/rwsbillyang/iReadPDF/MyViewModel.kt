@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.github.rwsbillyang.iReadPDF.db.Book
+import com.github.rwsbillyang.iReadPDF.db.PdfQuality
 import com.github.rwsbillyang.iReadPDF.pdfview.CacheStrategy
 import com.github.rwsbillyang.iReadPDF.pdfview.LocalUri
 import com.github.rwsbillyang.iReadPDF.pdfview.PdfPageLoader

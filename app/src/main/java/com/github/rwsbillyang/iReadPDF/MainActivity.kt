@@ -46,7 +46,6 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        destroyByUser = true
         setContent {
             MyAppTheme {
                 // A surface container using the 'background' color from the theme
@@ -71,8 +70,8 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
     override fun onDestroy() {
         super.onDestroy()
         //saveCurrentBook()
-        log("onDestroy, releasePdfLoader and shelf list, destroyByUser=$destroyByUser")
-        if(destroyByUser){
+        log("onDestroy, releasePdfLoader and shelf list")
+        if(!isChangingConfigurations){
             //若是configuration变化导致，不可release，只有back不再前台了则需release
             viewModel.releasePdfLoader()
             viewModel.releaseShelfList()
@@ -81,7 +80,6 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
         syncDb(this)
     }
 
-    private var destroyByUser = true
 
     //在系统未经用户许可可能销毁 Activity 时调用的方法。
     // 需要注意的是，如果用户主动销毁 Activity（例如按下返回键），则不会调用此方法。
@@ -89,7 +87,6 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         log("onSaveInstanceState, set destroyByUser = false")
-        destroyByUser = false
     }
 
 
@@ -135,16 +132,16 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
                         sharedPreferences.getString(AppConstants.KEY_CURRENT, null)?.let{
                             val b = dao.findOne(it)
                             if(b == null){
-                                localRouter.navByName(AppRoutes.BookShelf)
+                                localRouter.navByName(AppConstants.AppRoutes.BookShelf)
                             }else{
                                 log("open last read book: $b")
                                 //this@MainActivity.setLandscape(b.landscape)
 
-                                localRouter.navByName(AppRoutes.PDFViewer, b)
+                                localRouter.navByName(AppConstants.AppRoutes.PDFViewer, b)
                             }
-                        }?: localRouter.navByName(AppRoutes.BookShelf)
+                        }?: localRouter.navByName(AppConstants.AppRoutes.BookShelf)
                     }else{
-                        localRouter.navByName(AppRoutes.BookShelf)
+                        localRouter.navByName(AppConstants.AppRoutes.BookShelf)
                     }
                 }
             }
@@ -160,7 +157,7 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
                 val tmpBook = Book(id, originalFileName, uri.toString()).apply {
                     cachePages = false //临时打开的pdf不缓存其页面
                 }
-                router.navByName(AppRoutes.PDFViewer, tmpBook)
+                router.navByName(AppConstants.AppRoutes.PDFViewer, tmpBook)
             }
             initSettingsValue(viewModel)
         }
@@ -169,7 +166,6 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
     private suspend fun initSettingsValue(viewModel: MyViewModel){
         val p = dataStore.data.first()
         viewModel.enterBookDirectly = p[booleanPreferencesKey(AppConstants.SettingsKey.EnterBookDirectly)]?:false
-        viewModel.quality.value = p[stringPreferencesKey(AppConstants.SettingsKey.Quality)]?.let{ PdfQuality.valueOf(it)}?: PdfQuality.Middle
     }
 
 

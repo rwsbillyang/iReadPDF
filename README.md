@@ -26,7 +26,7 @@ Then iReadPDF app is born.
 - page offset
 - landscape/portrait
 - fullScreen
-- go to page
+
 
 ### Settings
 - whether enter the book of last reading time directly
@@ -36,3 +36,9 @@ Then iReadPDF app is born.
 - PDF Content
 - Jump according to content
 - Text selection and copy
+- jump to page in pdf viewer
+
+## Problems
+- In dark mode, text font color in toolbar of pdfview takes not effect
+- Not smooth when scroll pdf in landscape mode
+- The user experience of move pdf view is not good

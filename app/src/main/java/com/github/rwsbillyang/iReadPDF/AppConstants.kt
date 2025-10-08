@@ -14,10 +14,23 @@ object AppConstants {
 
     const val KEY_CURRENT = "current"
 
+    object AppRoutes {
+        const val BookShelf = "BookShelf"
+        const val PDFViewer = "PDFViewer"
+        const val Settings = "Settings"
+        const val BookSettings = "BookSettings"
+    }
+
     object SettingsKey {
         const val EnterBookDirectly = "EnterBookDirectly"
+    }
+    object BookSettingsKey {
+        const val Cover = "Cover"
         const val Quality = "Quality"
-
+        const val DarkMode = "DarkMode"
+        const val Name = "Name"
+        const val Author = "Author"
+        const val Publisher = "Publisher"
 
     }
 

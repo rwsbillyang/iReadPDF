@@ -6,6 +6,7 @@ import android.net.Uri
 import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.PrimaryKey
+import com.github.rwsbillyang.iReadPDF.R
 import com.github.rwsbillyang.iReadPDF.pdfview.CacheManager
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -22,6 +23,7 @@ import kotlinx.serialization.json.Json
  *  在修改了数据库内容后，执行进行同步到主db上，避免再wal中：pragma wal_checkpoint(full)
  * **/
 
+enum class PdfQuality(val id: Int){Low(R.string.quality_l), Middle(R.string.quality_m), High(R.string.quality_h),}
 
 /**
  * pdf file要么通过uri指定，通常再次启动app后有打开权限问题。
@@ -34,15 +36,26 @@ import kotlinx.serialization.json.Json
 class Book(
     @PrimaryKey//(autoGenerate = true)
     val id: String,//  md5(file content)
-    val name: String, // file name
-    val uriStr: String? = null, //
+    var name: String, // file name
+    val uriStr: String? = null, // should be null if it is a file, otherwise uri
     val format: String = "pdf",
+    var total: Int? = null, // total pages
+    var author: String? = null,
+    var publisher: String? = null,
+
+
+    //对于文字版pdf，黑色模式下其背景色为黑，文字也为黑，故对其bitmap像素进行取反操作，从而文字颜色变白，可以正常阅读
+    // 而图片扫描格式的PDF，可正常显示，无需进行位取反，禁用黑色模式，避免位像素进行取反运算
+    //对于纸质扫描图片格式的pdf，禁用黑色模式 在书架中进行对book进行设置
+    var disableDarkMode: Int = 0, //if 1, disable dark mode
+
+    var quality: String = PdfQuality.Middle.name, //0: Low, 1: Middler, 2: high
 
     var hasCover: Int = 0, //first page could be cover
     var fullScreen: Int = 0,
     var page: Int = 0,// current reading page number
     var pageOffset: Int = 0,// listState.firstVisibleItemScrollOffset
-    var total: Int? = null, // total pages
+
     var zoom: Float = 1.0f, //TransformState current reading zoom level
     var offsetX: Float = 0.0F, //TransformState offsetChange
     var offsetY: Float = 0.0F, //TransformState offsetChange
@@ -53,11 +66,6 @@ class Book(
     @Deprecated("use rotation instead") var landscape: Int = 0, //current reading 0: portrait, 1: landscape
 
     var lastOpen: Long = 0, // last open time, utc
-
-    //对于文字版pdf，黑色模式下其背景色为黑，文字也为黑，故对其bitmap像素进行取反操作，从而文字颜色变白，可以正常阅读
-    // 而图片扫描格式的PDF，可正常显示，无需进行位取反，禁用黑色模式，避免位像素进行取反运算
-    //对于纸质扫描图片格式的pdf，禁用黑色模式 在书架中进行对book进行设置
-    var disableDarkMode: Int = 0 //if 1, disable dark mode
 ) {
     @Ignore
     var cachePages: Boolean = true

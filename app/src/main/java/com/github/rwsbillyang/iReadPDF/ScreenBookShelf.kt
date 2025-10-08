@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -30,9 +31,13 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.DisplaySettings
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.HighQuality
+import androidx.compose.material.icons.rounded.More
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.SmartDisplay
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -46,6 +51,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -66,6 +72,7 @@ import com.github.rwsbillyang.composerouter.useRouter
 import com.github.rwsbillyang.iReadPDF.AppConstants.TAG
 import com.github.rwsbillyang.iReadPDF.db.Book
 import com.github.rwsbillyang.iReadPDF.db.MyDao
+import com.github.rwsbillyang.iReadPDF.db.PdfQuality
 import com.github.rwsbillyang.iReadPDF.db.db
 import com.github.rwsbillyang.iReadPDF.pdfview.CacheManager
 import com.github.rwsbillyang.iReadPDF.pdfview.FileUtil
@@ -73,6 +80,7 @@ import com.github.rwsbillyang.iReadPDF.pdfview.PdfPageLoader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 import java.io.File
 
 //导航栏按钮工具栏
@@ -108,7 +116,7 @@ fun BookShelfToolIcons(){
         Icon(Icons.Rounded.Edit, contentDescription = "Manage")
         //Text("Manage")
     }
-    IconButton(onClick = { router.navByName(AppRoutes.Settings) }) {
+    IconButton(onClick = { router.navByName(AppConstants.AppRoutes.Settings) }) {
         Icon(Icons.Rounded.Settings, contentDescription = "Settings")
     }
 }
@@ -138,7 +146,7 @@ suspend fun handleSelectedPdfUri(ctx: Context, dao: MyDao, viewModel: MyViewMode
 //主屏
 @Composable
 fun ScreenBookShelf(call: ScreenCall){
-    //Log.d(AppConstants.TAG, "enter ScreenBookShelf")
+    log("enter ScreenBookShelf")
 
     val scope = rememberCoroutineScope()
 
@@ -209,6 +217,7 @@ fun ScreenBookShelf(call: ScreenCall){
 //书籍竖直列表格
 @Composable
 fun BooksGrid(list: List<Book>, onDelOne: (b: Book)->Unit){
+    log("enter BooksGrid")
     LazyVerticalGrid(
         GridCells.Adaptive(minSize = 96.dp),
         Modifier.padding(15.dp),
@@ -228,12 +237,12 @@ fun BookGridItem(b: Book, onDel: (b: Book)->Unit){
     val viewModel: MyViewModel = LocalViewModel.current
     val router = useRouter()
     val ctx =  LocalContext.current
-
+    log("enter BookGridItem")
     val (cover, setCover) = remember { mutableStateOf(if(b.hasCover == 1) b.cover(ctx) else null) }
     Column(Modifier.height(200.dp).wrapContentWidth(Alignment.CenterHorizontally)
             .pointerInput(Unit) {
                 detectTapGestures(
-                    onTap = { router.navByName(AppRoutes.PDFViewer, b) },
+                    onTap = { router.navByName(AppConstants.AppRoutes.PDFViewer, b) },
                 )
             },
         verticalArrangement = Arrangement.Bottom,
@@ -271,12 +280,16 @@ fun BookGridItem(b: Book, onDel: (b: Book)->Unit){
 
 @Composable
 fun BookOperations(b: Book, h: Int, onDel: (b: Book)->Unit, setCover: (cover: File?)->Unit){
+    log("enter BookOperations")
     val ctx =  LocalContext.current
     val dao = db(ctx).dao()
     val scope = rememberCoroutineScope()
+    //val router = useRouter()
     val (disableDarkMode, setDisableDarkMode) = remember { mutableStateOf(b.disableDarkMode == 1) }
+    val quality = remember { mutableStateOf(PdfQuality.valueOf(b.quality)) }
+    val updatedQuality = rememberUpdatedState(quality.value)//建立对quality的引用
     Column(
-        Modifier.fillMaxWidth(0.8f).fillMaxHeight(0.7f).clip(RoundedCornerShape(4.dp)).zIndex(2f).background(MaterialTheme.colorScheme.surfaceVariant).alpha(0.5f), Arrangement.SpaceEvenly){
+        Modifier.fillMaxWidth(0.8f).fillMaxHeight(0.8f).clip(RoundedCornerShape(4.dp)).zIndex(2f).background(MaterialTheme.colorScheme.surfaceVariant).alpha(0.5f), Arrangement.SpaceEvenly, Alignment.Start){
         //封面操作
         BookOperation(Icons.Rounded.PhotoCamera, stringResource(if(b.hasCover == 1) R.string.cancel_cover else R.string.first_page_cover) ){
             scope.launch {
@@ -296,7 +309,6 @@ fun BookOperations(b: Book, h: Int, onDel: (b: Book)->Unit, setCover: (cover: Fi
             }
         }
 
-
         //暗黑模式切换
         BookOperation(Icons.Rounded.DarkMode, stringResource(if(disableDarkMode) R.string.enable_dark_mode else R.string.disable_dark_mode) ){
             scope.launch {
@@ -311,6 +323,26 @@ fun BookOperations(b: Book, h: Int, onDel: (b: Book)->Unit, setCover: (cover: Fi
             }
         }
 
+        //切换quality BookOperation后面跟lambda，每次运行时里面捕捉到的quality变量值是运行时上次更新的quality生效之前的值
+        BookOperation(Icons.Rounded.DisplaySettings, stringResource(quality2ResId(quality.value)) ){
+            scope.launch {
+                //这里必须使用updatedQuality，不能使用quality，因为lambda中捕捉到的变量值都是上一次更新生效之前的值，而不是更新后的值，
+                // 通过使用引用，可以使用最新值。updatedQuality相当于引用，通过它访问，总是得到最新的
+                //如果使用quality，捕捉到的值总是Middle从而newOne总是High
+                val newOne = when(updatedQuality.value){
+                    PdfQuality.Low -> PdfQuality.Middle
+                    PdfQuality.Middle -> PdfQuality.High
+                    PdfQuality.High -> PdfQuality.Low
+                }
+                //
+                log("click: quality=${quality.value}, new quality=$newOne")
+                quality.value = newOne
+                CacheManager.delCachedPages(ctx, b.id)
+                b.quality = newOne.name
+                dao.updateOne(b)
+            }
+        }
+
         //删除操作
         BookOperation(Icons.Rounded.Delete, stringResource(R.string.del) ){
             onDel(b)
@@ -318,9 +350,17 @@ fun BookOperations(b: Book, h: Int, onDel: (b: Book)->Unit, setCover: (cover: Fi
     }
 }
 
+fun quality2ResId(quality: PdfQuality) = when(quality)
+{
+    PdfQuality.Low -> R.string.quality_l
+    PdfQuality.Middle -> R.string.quality_m
+    PdfQuality.High -> R.string.quality_h
+}
+
 @Composable
 fun BookOperation(icon: ImageVector, label: String, onClick: ()->Unit){
-    Row(Modifier.fillMaxWidth().wrapContentWidth().padding(horizontal = 3.dp).pointerInput(Unit) {
+    log("enter BookOperation $label")
+    Row(Modifier.fillMaxWidth().wrapContentHeight().padding(horizontal = 3.dp).pointerInput(Unit) {
                 detectTapGestures(
                     onTap = { onClick() },
                 )

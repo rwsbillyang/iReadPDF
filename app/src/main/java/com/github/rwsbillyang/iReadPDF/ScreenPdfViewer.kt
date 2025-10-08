@@ -78,7 +78,7 @@ fun ToolBarItem(strId: Int, icon: ImageVector, modifier: Modifier, onClick:()->U
 
 
         //MaterialTheme.colorScheme.secondaryContainer: 在黑色模式下，期望字体在白色背景中呈现黑色，结果字体仍是白色，但淡色模式下期望白色正常
-        //TODO：黑白色设置无效，总被系统修改，即使采用如下，不管Black还是White，黑色模式下总是白色
+        //TODO：darkmode 黑白色设置无效，总被系统修改，即使采用如下，不管Black还是White，黑色模式下总是白色
 //        val configuration = LocalConfiguration.current
 //        val darkThemeEnabled = Configuration.UI_MODE_NIGHT_YES == configuration.uiMode.and(
 //            Configuration.UI_MODE_NIGHT_MASK)
@@ -163,11 +163,12 @@ fun ToolsBar(hideToolBar: ()-> Unit){
 
 
         ToolBarItem(R.string.bookshelf, Icons.AutoMirrored.Filled.MenuBook, w){
-            router.navByName(AppRoutes.BookShelf)
+            router.navByName(AppConstants.AppRoutes.BookShelf)
         }
 
         ToolBarItem(R.string.settings, Icons.Rounded.Settings, w){
-            router.navByName(AppRoutes.Settings)
+            //router.navByName(AppConstants.AppRoutes.BookSettings, b)
+            router.navByName(AppConstants.AppRoutes.Settings)
         }
     }
 }
@@ -209,6 +210,9 @@ fun ScreenPdfViewer(call: ScreenCall) {
         }
     }else{
         val statusCallBack = object : StatusCallBack {
+            override fun onTotalPages(total: Int) {
+                book.total = total
+            }
             override fun onPageChanged(currentPage: Int, pageOffset: Int) {
                 log("onPageChanged: currentPage=$currentPage, pageOffset=$pageOffset")
                 book.page = currentPage
@@ -246,7 +250,6 @@ fun ScreenPdfViewer(call: ScreenCall) {
                 viewModel.pdfPageLoader!!,
                 book,
                 Modifier.fillMaxSize().zIndex(0f),
-                viewModel.quality.value,
                 statusCallBack
             )
 

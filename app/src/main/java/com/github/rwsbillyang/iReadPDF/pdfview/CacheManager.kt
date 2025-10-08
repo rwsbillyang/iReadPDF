@@ -62,19 +62,24 @@ class CacheManager(
             return f
         }
 
-
-
-        fun delBook(ctx: Context, fileId: String){
+        fun delCachedPages(ctx: Context, fileId: String){
             val d = getCachedPagesDir(ctx, fileId)
             if (d.exists()) {
                 d.deleteRecursively()
             }
-
-            var f = defaultCover(ctx, fileId)
-            if (f.exists()) {
-                f.delete()
+        }
+        fun delAllCachedPages(ctx: Context){
+            val d = File("${ctx.cacheDir}/$_PDF_")
+            if (d.exists()) {
+                d.deleteRecursively()
             }
-            f = defaultPdfFile(ctx, fileId)
+        }
+
+        fun delBook(ctx: Context, fileId: String){
+            delCachedPages(ctx, fileId)
+            delCover(ctx, fileId)
+
+            val f = defaultPdfFile(ctx, fileId)
             if (f.exists()) {
                 f.delete()
             }
