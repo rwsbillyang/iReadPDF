@@ -46,7 +46,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
@@ -286,7 +285,7 @@ fun ScreenPdfViewer(call: ScreenCall) {
                 ToolsBar({showInputPageNumber = it}){showToolsBar = false}
             }
             if(showInputPageNumber){
-                InputDialog(stringResource(id = R.string.page_number), "0~${book.total}", KeyboardType.Number, onCancel = {showInputPageNumber = false}){
+                InputDialog(book.rotation, stringResource(id = R.string.page_number), "0~${book.total}", KeyboardType.Number, onCancel = {showInputPageNumber = false}){
                     showInputPageNumber = false
                     log("got page number $it")
                     if(!it.isNullOrEmpty()){
@@ -312,8 +311,8 @@ fun ScreenPdfViewer(call: ScreenCall) {
 }
 
 @Composable
-fun InputDialog(title: String?, placeholder: String, keyboardType: KeyboardType, initial: String? = null, onCancel: () -> Unit, onOK: (result: String?) -> Unit){
-    Dialog<String, String>(title, stringResource(id = R.string.cancel), stringResource(id = R.string.ok),
+fun InputDialog(rotation:Int, title: String?, placeholder: String, keyboardType: KeyboardType, initial: String? = null, onCancel: () -> Unit, onOK: (result: String?) -> Unit){
+    MyDialog<String, String>(rotation, title, stringResource(id = R.string.cancel), stringResource(id = R.string.ok),
         initial, onOK, onCancel){v, notifyResult->
         //notifyResult即Dialog中的{result.value = it}，将结果赋值给Dialog中的result
 
@@ -333,7 +332,8 @@ fun InputDialog(title: String?, placeholder: String, keyboardType: KeyboardType,
     }
 }
 @Composable
-fun <T, R> Dialog(
+fun <T, R> MyDialog(
+    rotation:Int,
     title: String? = null,
     cancelText: String = "Cancel",
     okText: String = "OK",
@@ -345,7 +345,9 @@ fun <T, R> Dialog(
     val result = remember { mutableStateOf<R?>(null) }
     val currentResult = rememberUpdatedState(result.value)
     Dialog(onDismissRequest = { onCancel() }) {
-        Card(Modifier.fillMaxWidth().height(250.dp).padding(16.dp),
+        Card(Modifier.fillMaxWidth().height(250.dp).graphicsLayer(
+            rotationZ = rotation.toFloat()//toolbar跟随旋转
+        ).padding(16.dp),
             shape = RoundedCornerShape(10.dp),
         ){
             Column(Modifier.fillMaxSize(), Arrangement.SpaceAround, Alignment.CenterHorizontally)
