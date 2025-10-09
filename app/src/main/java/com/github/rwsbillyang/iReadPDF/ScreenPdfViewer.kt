@@ -1,13 +1,10 @@
 package com.github.rwsbillyang.iReadPDF
 
 import android.app.Activity
-import android.content.pm.ActivityInfo
 import android.util.Log
 import android.view.Window
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.rememberTransformableState
-import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,7 +15,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.rounded.Adjust
@@ -27,33 +28,37 @@ import androidx.compose.material.icons.rounded.FullscreenExit
 import androidx.compose.material.icons.rounded.Landscape
 import androidx.compose.material.icons.rounded.Portrait
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.zIndex
-
 import com.github.rwsbillyang.composerouter.ScreenCall
 import com.github.rwsbillyang.composerouter.useRouter
 import com.github.rwsbillyang.iReadPDF.AppConstants.TAG
@@ -95,7 +100,7 @@ fun ToolBarItem(strId: Int, icon: ImageVector, modifier: Modifier, onClick:()->U
     }
 }
 @Composable
-fun ToolsBar(hideToolBar: ()-> Unit){
+fun ToolsBar(showPageNumberInputDlg: (show: Boolean)->Unit ,hideToolBar: ()-> Unit){
     val viewModel: MyViewModel = LocalViewModel.current
     val b = viewModel.currentBook
     if(b == null)
@@ -115,7 +120,7 @@ fun ToolsBar(hideToolBar: ()-> Unit){
         val w = Modifier.weight(1f)
 
         ToolBarItem(R.string.jump, Icons.Rounded.Adjust, w){
-            Log.d(TAG, "TODO: jump to page")
+            showPageNumberInputDlg(true)
             hideToolBar()
         }
 
@@ -189,6 +194,11 @@ fun ScreenPdfViewer(call: ScreenCall) {
     val viewModel: MyViewModel = LocalViewModel.current
 
     var showToolsBar by remember { mutableStateOf(false) }
+
+    var showInputPageNumber by remember { mutableStateOf(false) }
+    var pageNumber by remember { mutableStateOf<Int?>(null) }
+
+
     val window = getCurrentWindow()
 
     LaunchedEffect(book){
@@ -228,20 +238,25 @@ fun ScreenPdfViewer(call: ScreenCall) {
             .pointerInput(Unit) { detectTapGestures(onTap = { showToolsBar = !showToolsBar }) }
             .layout { measurable, constraints ->
                 //若旋转90度，对宽高进行置换
-                val newConstraints = if(book.rotation == 90 || book.rotation == -90 || book.rotation == 270){
-                    constraints.copy(
-                        minWidth = constraints.minHeight,
-                        maxWidth = constraints.maxHeight,
-                        minHeight = constraints.minWidth,
-                        maxHeight = constraints.maxWidth)
-                }else{ constraints }
+                val newConstraints =
+                    if (book.rotation == 90 || book.rotation == -90 || book.rotation == 270) {
+                        constraints.copy(
+                            minWidth = constraints.minHeight,
+                            maxWidth = constraints.maxHeight,
+                            minHeight = constraints.minWidth,
+                            maxHeight = constraints.maxWidth
+                        )
+                    } else {
+                        constraints
+                    }
 
                 //measurable代表着"具备可测量能力的"，即当前的box，经过measure之后，得到一个"具备可置放能力的"placeable
                 val placeable = measurable.measure(newConstraints)
                 //log("layout: rotation=${book.rotation},constraints:minWidth=${constraints.minWidth}, maxWidth=${constraints.maxWidth}, minHeight=${constraints.minHeight}, maxHeight=${constraints.maxHeight}, placeable.width=${placeable.width}, placeable.height=${placeable.height}")
 
                 //根据placeable中的置放数据，进行layout后，返回MeasureResult对组件进行重新布局layout
-                layout(placeable.width, placeable.height){ placeable.placeRelative(0,0) } }
+                layout(placeable.width, placeable.height) { placeable.placeRelative(0, 0) }
+            }
 
             ,Alignment.Center //若将Toolbar放在底部，全屏后无法正确显示出来（可能布局变化，导致在底部屏幕之外）
         )
@@ -254,12 +269,93 @@ fun ScreenPdfViewer(call: ScreenCall) {
             )
 
             if(showToolsBar){
-                ToolsBar{showToolsBar = false}
+                ToolsBar({showInputPageNumber = it}){showToolsBar = false}
+            }
+            if(showInputPageNumber){
+                InputDialog(stringResource(id = R.string.page_number), "0~${book.total}", KeyboardType.Number, onCancel = {showInputPageNumber = false}){
+                    showInputPageNumber = false
+                    log("got page number $it")
+                    if(!it.isNullOrEmpty()){
+                        try{
+                            val n = it.toInt()
+                            if (n >= 0 && n < viewModel.pdfPageLoader!!.pageCount) {
+                                book.page = n
+                                book.pageOffset = 0
+                                if (book.rotation == 90 || book.rotation == -90 || book.rotation == 270)
+                                    book.offsetX = 0f
+                                else
+                                    book.offsetY = 0f
+                                pageNumber = n
+                            }
+                        }catch (e: NumberFormatException ){
+                            Log.w(TAG, "invalid number $it")
+                        }
+                    }
+                }
             }
         }
     }
 }
 
+@Composable
+fun InputDialog(title: String?, placeholder: String, keyboardType: KeyboardType, initial: String? = null, onCancel: () -> Unit, onOK: (result: String?) -> Unit){
+    Dialog(title, stringResource(id = R.string.cancel), stringResource(id = R.string.ok),
+        initial, onOK, onCancel){v, notifyResult->
+        //notifyResult即Dialog中的{result.value = it}，将结果赋值给Dialog中的result
+
+        var text by remember { mutableStateOf(v?:"") }
+
+        TextField(
+            value = text,
+            placeholder = {Text(placeholder, color= MaterialTheme.colorScheme.secondary)},
+            onValueChange = { text = it; notifyResult(text) },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = keyboardType,
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(onDone = {onOK(text)}),
+            singleLine = true
+        )
+    }
+}
+@Composable
+fun <T, R> Dialog(
+    title: String? = null,
+    cancelText: String = "Cancel",
+    okText: String = "OK",
+    value: T? = null,
+    onOK: (result: R?) -> Unit,
+    onCancel: () -> Unit,
+    content: @Composable (value: T?, notifyResult: (r: R?)->Unit)->Unit
+) {
+    val result = remember { mutableStateOf<R?>(null) }
+    val currentResult = rememberUpdatedState(result.value)
+    Dialog(onDismissRequest = { onCancel() }) {
+        Card(Modifier.fillMaxWidth().height(250.dp).padding(16.dp),
+            shape = RoundedCornerShape(10.dp),
+        ){
+            Column(Modifier.fillMaxSize(), Arrangement.SpaceAround, Alignment.CenterHorizontally)
+            {
+                title?.let{ Text(it, Modifier.padding(16.dp)) }
+                content(value){result.value = it} //即value 和 {result.value = it}，作为两个实参传递给InputNumberDialog中的v, notifyResult->
+                Row(Modifier.fillMaxWidth(),Arrangement.SpaceEvenly) {
+                    OutlinedButton(
+                        onClick = { onCancel() },
+                        modifier = Modifier.width(100.dp),
+                    ) {
+                        Text(cancelText)
+                    }
+                    OutlinedButton(
+                        onClick = { onOK(currentResult.value) },
+                        modifier = Modifier.width(100.dp),
+                    ) {
+                        Text(okText)
+                    }
+                }
+            }
+        }
+    }
+}
 
 /**
  * 获取当前 Compose 界面的 Activity 窗口（Window）

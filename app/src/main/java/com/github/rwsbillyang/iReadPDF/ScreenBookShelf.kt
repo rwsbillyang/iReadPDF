@@ -3,7 +3,6 @@ package com.github.rwsbillyang.iReadPDF
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -28,18 +27,14 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DisplaySettings
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.HighQuality
-import androidx.compose.material.icons.rounded.More
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material.icons.rounded.SmartDisplay
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -69,7 +64,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.github.rwsbillyang.composerouter.ScreenCall
 import com.github.rwsbillyang.composerouter.useRouter
-import com.github.rwsbillyang.iReadPDF.AppConstants.TAG
 import com.github.rwsbillyang.iReadPDF.db.Book
 import com.github.rwsbillyang.iReadPDF.db.MyDao
 import com.github.rwsbillyang.iReadPDF.db.PdfQuality
@@ -80,7 +74,6 @@ import com.github.rwsbillyang.iReadPDF.pdfview.PdfPageLoader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 import java.io.File
 
 //导航栏按钮工具栏
@@ -179,7 +172,7 @@ fun ScreenBookShelf(call: ScreenCall){
                 } // 处理选中的 Uri
             )
             Column(Modifier.fillMaxSize(),verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally){
-                Button({
+                FilledTonalButton({
                     filePickerLauncher.launch(arrayOf("application/pdf") )
                 }){
                     Text(stringResource(id = R.string.add_book), Modifier.fillMaxWidth(0.5f), textAlign = TextAlign.Center)
@@ -193,7 +186,7 @@ fun ScreenBookShelf(call: ScreenCall){
             if(delRow != null){
                 AlertDialog(
                     onDismissRequest = {  },
-                    dismissButton = {  TextButton(onClick = { setDelRow(null) })  {  Text(stringResource(id = R.string.del_cancel)) }},
+                    dismissButton = {  TextButton(onClick = { setDelRow(null) })  {  Text(stringResource(id = R.string.cancel)) }},
                     confirmButton = {
                         TextButton(onClick = {
                             scope.launch {
@@ -202,7 +195,7 @@ fun ScreenBookShelf(call: ScreenCall){
                                 CacheManager.delBook(ctx, delRow.id)
                             }
                             setDelRow(null)
-                        }) {   Text(stringResource(id = R.string.del_ok))   }
+                        }) {   Text(stringResource(id = R.string.ok))   }
                     },
                     title = { Text(stringResource(id = R.string.del_title)) },
                     text = {

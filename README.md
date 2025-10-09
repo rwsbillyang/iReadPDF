@@ -16,16 +16,20 @@ Then iReadPDF app is born.
 
 ### BookShelf
 - Add/remove books into/from shelf
-- extract first page as cover, unset cover
-- enable/disable dark mode for every book
+- Extract first page as cover, unset cover
+- Enable/disable dark mode for every pdf book
+- Support choose quality for every pdf book
 
 ### PDFView
- remember and restore the following states:
-- zoom/move
-- page
-- page offset
-- landscape/portrait
-- fullScreen
+- jump to the specified page
+- portrait/lanscape
+- full screen
+- remember and restore the following states of every pdf book:
+  - zoom/move
+  - page
+  - page offset
+  - landscape/portrait
+  - fullScreen
 
 
 ### Settings
@@ -33,10 +37,10 @@ Then iReadPDF app is born.
 - choose pdf quality: High, Middle, Low
 
 ## TODO
-- PDF Content
-- Jump according to content
+- Show DF Content
+- Jump when click item in content
 - Text selection and copy
-- jump to page in pdf viewer
+
 
 ## Problems
 - In dark mode, text font color in toolbar of pdfview takes not effect

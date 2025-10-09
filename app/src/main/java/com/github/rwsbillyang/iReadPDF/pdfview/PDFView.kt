@@ -67,8 +67,8 @@ fun PdfView(
     ) }
 
     //listen page change
-    val listState = rememberLazyListState()
-    LaunchedEffect(listState) {
+    val listState = rememberLazyListState(book.page, 0)
+    LaunchedEffect(book.page) {
         Log.d(TAG, "requestScrollToItem ${book.page}, pageOffset=${ book.pageOffset}")
         listState.requestScrollToItem(book.page, book.pageOffset)
         statusCallBack?.onTotalPages(pdfPageLoader.pageCount)
@@ -84,7 +84,7 @@ fun PdfView(
     val lazyItemHeight = remember(lazyItemWidth.value, pdfPageLoader.pageSize.width, pdfPageLoader.pageSize.height) {
         mutableStateOf((lazyItemWidth.value * pdfPageLoader.pageSize.height) / pdfPageLoader.pageSize.width)
     }
-    //Log.d(TAG, "lazyItemWidth=${lazyItemWidth.value}, lazyItemHeight=${lazyItemHeight.value}")
+    Log.d(TAG, "PdfView: lazyItemWidth=${lazyItemWidth.value}, lazyItemHeight=${lazyItemHeight.value}")
 
     var scale by remember { mutableFloatStateOf(book.zoom) }
     var offset by remember { mutableStateOf(Offset(book.offsetX, book.offsetY))}

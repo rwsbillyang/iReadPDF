@@ -15,8 +15,8 @@
     <string name="enable_dark_mode">Enable DarkMode</string>
     <string name="del">Del from Shelf</string>
     <string name="del_title">Delete book</string>
-    <string name="del_ok">OK</string>
-    <string name="del_cancel">Cancel</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
     <string name="del_desc">Are your sure to delete from book shelf？You can re-add it.</string>
 
     <string name="fullscreen">Full Screen</string>
@@ -24,6 +24,10 @@
 
     <string name="enter_book">Enter Book Directly</string>
     <string name="enter_book_desc">Enter the book of reading last time directly</string>
+
+    <string name="page_number">Please input page number</string>
+
+
 
     <string name="more_operations">More Operations</string>
     <string name="book_settings">Book Settings</string>
