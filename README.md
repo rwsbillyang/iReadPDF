@@ -21,10 +21,10 @@ Then iReadPDF app is born.
 - Support choose quality for every pdf book
 
 ### PDFView
-- jump to the specified page
-- portrait/lanscape
-- full screen
-- remember and restore the following states of every pdf book:
+- Jump to the specified page
+- Portrait/lanscape
+- Full screen
+- Remember and restore the following states of every pdf book:
   - zoom/move
   - page
   - page offset
@@ -33,8 +33,8 @@ Then iReadPDF app is born.
 
 
 ### Settings
-- whether enter the book of last reading time directly
-- choose pdf quality: High, Middle, Low
+- Whether enter the book of last reading time directly
+- Enable/disable move pdf
 
 ## TODO
 - Show DF Content

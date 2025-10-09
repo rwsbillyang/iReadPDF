@@ -228,8 +228,8 @@ fun ScreenPdfViewer(call: ScreenCall) {
                 book.page = currentPage
                 book.pageOffset = pageOffset
             }
-            override fun onTransformStateChanged(zoomChange: Float, offsetChange: Offset, rotationChange: Float) {
-                viewModel.updateTransformState(zoomChange, offsetChange.x, offsetChange.y)
+            override fun onTransformStateChanged(zoomChange: Float, moveX: Float, moveY: Float, rotationChange: Float) {
+                viewModel.updateTransformState(zoomChange, moveX, moveY)
             }
         }
 
@@ -265,7 +265,8 @@ fun ScreenPdfViewer(call: ScreenCall) {
                 viewModel.pdfPageLoader!!,
                 book,
                 Modifier.fillMaxSize().zIndex(0f),
-                statusCallBack
+                statusCallBack,
+                viewModel.disableMovePdf
             )
 
             if(showToolsBar){

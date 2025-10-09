@@ -68,13 +68,12 @@ class MyViewModel: ViewModel(){
         _currentBook.value?.let { it.landscape = landscape }?:Log.w(TAG, "currentBook is null")
     }
     fun updateTransformState(zoom: Float, x: Float, y: Float) {
-        //scale.value *= zoom
-        //offset.value += Offset(x,y)
-
         _currentBook.value?.let {
             it.zoom *= zoom
-            it.offsetX += x
-            it.offsetY += y
+            if(!disableMovePdf){
+                it.offsetX += x
+                it.offsetY += y
+            }
         }?:Log.w(TAG, "currentBook is null")
     }
 
@@ -91,6 +90,7 @@ class MyViewModel: ViewModel(){
 
     //settings
     var enterBookDirectly = false
-    val quality = mutableStateOf(PdfQuality.Middle)
+    var disableMovePdf = true
+    //val quality = mutableStateOf(PdfQuality.Middle)
 
 }

@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -50,7 +51,8 @@ fun PdfView(
     pdfPageLoader: PdfPageLoader,
     book: Book,
     modifier: Modifier = Modifier,
-    statusCallBack: StatusCallBack? = null
+    statusCallBack: StatusCallBack,
+    disableMovePdf: Boolean
 ) {
     val configuration = LocalConfiguration.current
 
@@ -71,12 +73,12 @@ fun PdfView(
     LaunchedEffect(book.page) {
         Log.d(TAG, "requestScrollToItem ${book.page}, pageOffset=${ book.pageOffset}")
         listState.requestScrollToItem(book.page, book.pageOffset)
-        statusCallBack?.onTotalPages(pdfPageLoader.pageCount)
+        statusCallBack.onTotalPages(pdfPageLoader.pageCount)
         snapshotFlow { listState.firstVisibleItemScrollOffset }
             .distinctUntilChanged()
             .collect {
                 //Log.d(TAG, "firstVisibleItemIndex=${listState.firstVisibleItemIndex}, listState.firstVisibleItemScrollOffset=${listState.firstVisibleItemScrollOffset}")
-                statusCallBack?.onPageChanged(listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset)
+                statusCallBack.onPageChanged(listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset)
             }
     }
 
@@ -87,14 +89,22 @@ fun PdfView(
     Log.d(TAG, "PdfView: lazyItemWidth=${lazyItemWidth.value}, lazyItemHeight=${lazyItemHeight.value}")
 
     var scale by remember { mutableFloatStateOf(book.zoom) }
-    var offset by remember { mutableStateOf(Offset(book.offsetX, book.offsetY))}
+
+    //只要禁止了move，就将其offset设为0，避免偏移
+    var offset by remember(disableMovePdf) { mutableStateOf(if(disableMovePdf) Offset(0f, 0f) else Offset(book.offsetX, book.offsetY))}
+
+    //val disableModePdfRef = rememberUpdatedState(disableMovePdf)
     val transformableState  = rememberTransformableState { zoomChange, offsetChange, rotationChange ->
         scale *= zoomChange
         val newOffset = if(book.rotation == 90 || book.rotation == -90 || book.rotation == 270){
             Offset(-offsetChange.y, offsetChange.x)
         }else offsetChange
-        offset += newOffset
-        statusCallBack?.onTransformStateChanged(zoomChange, newOffset, rotationChange)
+
+        if(!disableMovePdf)
+            offset += newOffset
+
+        //若disableMovePdf，最终newOffset并没有记录到book的offsetX offsetY中
+        statusCallBack.onTransformStateChanged(zoomChange, newOffset.x, newOffset.y, rotationChange)
 
         log("zoomChange=$zoomChange, offsetChange=$offsetChange, rotationChange=$rotationChange")
     }
@@ -103,8 +113,8 @@ fun PdfView(
         scaleX = scale,
         scaleY = scale,
         rotationZ = book.rotation.toFloat(),
-        translationX = offset.x,
-        translationY = offset.y).background(MaterialTheme.colorScheme.surfaceVariant)
+        translationX = if(disableMovePdf) 0f else offset.x,
+        translationY = if(disableMovePdf) 0f else offset.y).background(MaterialTheme.colorScheme.surfaceVariant)
         .transformable(state = transformableState)
         , listState, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         items(pdfPageLoader.pageCount, { it.toString() }) { index ->

@@ -26,6 +26,8 @@
 
     <string name="enter_book">Enter Book Directly</string>
     <string name="enter_book_desc">Enter the book of reading last time directly</string>
+    <string name="disable_move_pdf">Disable Move PDF</string>
+    <string name="disable_move_pdf_desc">enable it if need to move pdf on screen</string>
 
     <string name="page_number">Please input page number</string>
 

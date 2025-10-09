@@ -36,7 +36,16 @@ fun SettingsScreen(paddingValues: PaddingValues) {
                     title = stringResource(id = R.string.enter_book),
                     summary = stringResource(id = R.string.enter_book_desc),
                     defaultChecked = false,
-                    onCheckedChange = {v-> viewModel.enterBookDirectly},
+                    onCheckedChange = {v-> viewModel.enterBookDirectly = v},
+                    enabled = true)
+            }
+
+            prefsItem{
+                CheckBoxPref(key = AppConstants.SettingsKey.DisableMovePdf,
+                    title = stringResource(id = R.string.disable_move_pdf),
+                    summary = stringResource(id = R.string.disable_move_pdf_desc),
+                    defaultChecked = true,
+                    onCheckedChange = {v-> viewModel.disableMovePdf = v},
                     enabled = true)
             }
 
