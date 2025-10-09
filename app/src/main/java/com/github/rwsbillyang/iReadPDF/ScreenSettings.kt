@@ -38,7 +38,7 @@ fun SettingsScreen(paddingValues: PaddingValues) {
                 CheckBoxPref(key = AppConstants.SettingsKey.EnterBookDirectly,
                     title = stringResource(id = R.string.enter_book),
                     summary = stringResource(id = R.string.enter_book_desc),
-                    textColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    textColor = MaterialTheme.colorScheme.primary,
                     defaultChecked = false,
                     onCheckedChange = {v-> viewModel.enterBookDirectly = v},
                     enabled = true)
@@ -48,7 +48,7 @@ fun SettingsScreen(paddingValues: PaddingValues) {
                 CheckBoxPref(key = AppConstants.SettingsKey.DisableMovePdf,
                     title = stringResource(id = R.string.disable_move_pdf),
                     summary = stringResource(id = R.string.disable_move_pdf_desc),
-                    textColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    textColor = MaterialTheme.colorScheme.primary,
                     defaultChecked = true,
                     onCheckedChange = {v-> viewModel.disableMovePdf = v},
                     enabled = true)
@@ -58,6 +58,7 @@ fun SettingsScreen(paddingValues: PaddingValues) {
                 DropDownPref(
                     key = AppConstants.SettingsKey.Theme,
                     title = stringResource(id = R.string.theme),
+                    textColor = MaterialTheme.colorScheme.primary,
                     useSelectedAsSummary = true,
                     entries = ThemeEnum.values()
                         .associate { Pair(it.name, stringResource(id = it.resId)) },
@@ -72,7 +73,7 @@ fun SettingsScreen(paddingValues: PaddingValues) {
                 TextPref(
                     title = stringResource(id = R.string.clear_book_cache),
                     summary =stringResource(id = R.string.clear_all_book_cache_desc),
-                    textColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    textColor = MaterialTheme.colorScheme.primary,
                     onClick = {
                         scope.launch { CacheManager.delAllCachedPages(ctx) }
                     }
