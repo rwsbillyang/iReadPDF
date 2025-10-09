@@ -13,6 +13,7 @@ import com.github.rwsbillyang.iReadPDF.pdfview.CacheStrategy
 import com.github.rwsbillyang.iReadPDF.pdfview.LocalUri
 import com.github.rwsbillyang.iReadPDF.pdfview.PdfPageLoader
 import com.github.rwsbillyang.iReadPDF.pdfview.TAG
+import com.github.rwsbillyang.iReadPDF.ui.theme.ThemeEnum
 
 
 class MyViewModel: ViewModel(){
@@ -91,6 +92,6 @@ class MyViewModel: ViewModel(){
     //settings
     var enterBookDirectly = false
     var disableMovePdf = true
-    //val quality = mutableStateOf(PdfQuality.Middle)
+    var theme = mutableStateOf(ThemeEnum.Default)
 
 }

@@ -28,6 +28,13 @@
     <string name="enter_book_desc">Enter the book of reading last time directly</string>
     <string name="disable_move_pdf">Disable Move PDF</string>
     <string name="disable_move_pdf_desc">enable it if need to move pdf on screen</string>
+    <string name="theme">Theme</string>
+    <string name="theme_default">Default</string>
+    <string name="theme_blue">Blue</string>
+    <string name="theme_green">Green</string>
+    <string name="theme_orange">Orange</string>
+    <string name="theme_purple">Purple</string>
+    <string name="theme_dynamic">Dynamic(Android12+)</string>
 
     <string name="page_number">Please input page number</string>
 

@@ -79,8 +79,7 @@ fun ToolBarItem(strId: Int, icon: ImageVector, modifier: Modifier, onClick:()->U
         verticalArrangement = Arrangement.SpaceAround,
         horizontalAlignment = Alignment.CenterHorizontally)
     {
-        Icon(icon, text, Modifier.fillMaxWidth().size(32.dp), MaterialTheme.colorScheme.secondaryContainer)
-
+        Icon(icon, text, Modifier.fillMaxWidth().size(32.dp), MaterialTheme.colorScheme.onSurfaceVariant)
 
         //MaterialTheme.colorScheme.secondaryContainer: 在黑色模式下，期望字体在白色背景中呈现黑色，结果字体仍是白色，但淡色模式下期望白色正常
         //TODO：darkmode 黑白色设置无效，总被系统修改，即使采用如下，不管Black还是White，黑色模式下总是白色
@@ -91,7 +90,7 @@ fun ToolBarItem(strId: Int, icon: ImageVector, modifier: Modifier, onClick:()->U
 //        Log.d(TAG, "darkThemeEnabled=$darkThemeEnabled, color=${color}")
 
         //按钮底部文字
-        Text(text, Modifier.fillMaxWidth(), MaterialTheme.colorScheme.secondaryContainer,
+        Text(text, Modifier.fillMaxWidth(), MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
             lineHeight = 16.sp,
             maxLines= 2, minLines = 2,
@@ -115,7 +114,7 @@ fun ToolsBar(showPageNumberInputDlg: (show: Boolean)->Unit ,hideToolBar: ()-> Un
     //zIndex(1f)大者在小者之上
     Row(Modifier.fillMaxWidth().height(96.dp).graphicsLayer(
         rotationZ = b.rotation.toFloat()//toolbar跟随旋转
-    ).background(MaterialTheme.colorScheme.onSecondaryContainer.copy(0.8f)).zIndex(1f),
+    ).background(MaterialTheme.colorScheme.surfaceVariant.copy(0.9f)).zIndex(1f),
         Arrangement.SpaceAround, Alignment.Bottom){
         val w = Modifier.weight(1f)
 

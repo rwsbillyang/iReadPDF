@@ -4,6 +4,7 @@ package com.github.rwsbillyang.iReadPDF
 import android.content.Context
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -12,7 +13,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import com.github.rwsbillyang.iReadPDF.db.PdfQuality
 import com.github.rwsbillyang.iReadPDF.pdfview.CacheManager
+import com.github.rwsbillyang.iReadPDF.ui.theme.ThemeEnum
 import com.jamal.composeprefs3.ui.PrefsScreen
 import com.jamal.composeprefs3.ui.prefs.CheckBoxPref
 import com.jamal.composeprefs3.ui.prefs.DropDownPref
@@ -35,6 +38,7 @@ fun SettingsScreen(paddingValues: PaddingValues) {
                 CheckBoxPref(key = AppConstants.SettingsKey.EnterBookDirectly,
                     title = stringResource(id = R.string.enter_book),
                     summary = stringResource(id = R.string.enter_book_desc),
+                    textColor = MaterialTheme.colorScheme.onPrimaryContainer,
                     defaultChecked = false,
                     onCheckedChange = {v-> viewModel.enterBookDirectly = v},
                     enabled = true)
@@ -44,15 +48,31 @@ fun SettingsScreen(paddingValues: PaddingValues) {
                 CheckBoxPref(key = AppConstants.SettingsKey.DisableMovePdf,
                     title = stringResource(id = R.string.disable_move_pdf),
                     summary = stringResource(id = R.string.disable_move_pdf_desc),
+                    textColor = MaterialTheme.colorScheme.onPrimaryContainer,
                     defaultChecked = true,
                     onCheckedChange = {v-> viewModel.disableMovePdf = v},
                     enabled = true)
+            }
+
+            prefsItem {
+                DropDownPref(
+                    key = AppConstants.SettingsKey.Theme,
+                    title = stringResource(id = R.string.theme),
+                    useSelectedAsSummary = true,
+                    entries = ThemeEnum.values()
+                        .associate { Pair(it.name, stringResource(id = it.resId)) },
+                    defaultValue = ThemeEnum.Default.name,
+                    onValueChange = {
+                        viewModel.theme.value = ThemeEnum.valueOf(it)
+                    }
+                )
             }
 
             prefsItem{
                 TextPref(
                     title = stringResource(id = R.string.clear_book_cache),
                     summary =stringResource(id = R.string.clear_all_book_cache_desc),
+                    textColor = MaterialTheme.colorScheme.onPrimaryContainer,
                     onClick = {
                         scope.launch { CacheManager.delAllCachedPages(ctx) }
                     }

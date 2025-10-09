@@ -24,6 +24,7 @@ object AppConstants {
     object SettingsKey {
         const val EnterBookDirectly = "EnterBookDirectly"
         const val DisableMovePdf = "DisableMovePdf"
+        const val Theme = "Theme"
     }
     object BookSettingsKey {
         const val Cover = "Cover"

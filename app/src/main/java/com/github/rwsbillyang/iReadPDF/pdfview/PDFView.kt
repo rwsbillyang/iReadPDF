@@ -25,7 +25,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -114,7 +113,7 @@ fun PdfView(
         scaleY = scale,
         rotationZ = book.rotation.toFloat(),
         translationX = if(disableMovePdf) 0f else offset.x,
-        translationY = if(disableMovePdf) 0f else offset.y).background(MaterialTheme.colorScheme.surfaceVariant)
+        translationY = if(disableMovePdf) 0f else offset.y).background(MaterialTheme.colorScheme.surface)
         .transformable(state = transformableState)
         , listState, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         items(pdfPageLoader.pageCount, { it.toString() }) { index ->

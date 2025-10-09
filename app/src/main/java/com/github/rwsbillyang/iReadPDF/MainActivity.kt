@@ -21,8 +21,8 @@ import com.github.rwsbillyang.iReadPDF.db.Book
 import com.github.rwsbillyang.iReadPDF.db.db
 import com.github.rwsbillyang.iReadPDF.db.syncDb
 import com.github.rwsbillyang.iReadPDF.pdfview.FileUtil
-import com.github.rwsbillyang.iReadPDF.pdfview.setLandscape
 import com.github.rwsbillyang.iReadPDF.ui.theme.MyAppTheme
+import com.github.rwsbillyang.iReadPDF.ui.theme.ThemeEnum
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -47,7 +47,7 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MyAppTheme {
+            MyAppTheme(viewModel.theme.value) {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -175,8 +175,8 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
     private suspend fun initSettingsValue(viewModel: MyViewModel){
         val p = dataStore.data.first()
         viewModel.enterBookDirectly = p[booleanPreferencesKey(AppConstants.SettingsKey.EnterBookDirectly)]?:false
+        viewModel.disableMovePdf = p[booleanPreferencesKey(AppConstants.SettingsKey.DisableMovePdf)]?:true
+        viewModel.theme.value = p[stringPreferencesKey(AppConstants.SettingsKey.Theme)]?.let { ThemeEnum.valueOf(it) }?: ThemeEnum.Default
     }
-
-
 }
 
