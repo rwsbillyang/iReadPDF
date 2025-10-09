@@ -26,19 +26,20 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.AddPhotoAlternate
+import androidx.compose.material.icons.rounded.Brightness1
+import androidx.compose.material.icons.rounded.Brightness4
+import androidx.compose.material.icons.rounded.PostAdd
 import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.DisplaySettings
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.PhotoCamera
+import androidx.compose.material.icons.rounded.LensBlur
+import androidx.compose.material.icons.rounded.PhotoSizeSelectLarge
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -99,7 +100,7 @@ fun BookShelfToolIcons(){
     IconButton(onClick = {
         filePickerLauncher.launch(arrayOf("application/pdf") )
     }) {
-        Icon(Icons.Rounded.Add, contentDescription = "add books")
+        Icon(Icons.Rounded.PostAdd, contentDescription = "add books")
         //Text("Add Books")
     }
 
@@ -146,7 +147,7 @@ fun ScreenBookShelf(call: ScreenCall){
     val ctx =  LocalContext.current
     val dao = db(ctx).dao()
 
-    val snackbarHostState = remember { SnackbarHostState() }
+    //val snackbarHostState = remember { SnackbarHostState() }
     val viewModel: MyViewModel = LocalViewModel.current
 
     val (delRow, setDelRow) = remember { mutableStateOf<Book?>(null) }
@@ -284,7 +285,7 @@ fun BookOperations(b: Book, h: Int, onDel: (b: Book)->Unit, setCover: (cover: Fi
     Column(
         Modifier.fillMaxWidth(0.8f).fillMaxHeight(0.8f).clip(RoundedCornerShape(4.dp)).zIndex(2f).background(MaterialTheme.colorScheme.surfaceVariant).alpha(0.5f), Arrangement.SpaceEvenly, Alignment.Start){
         //封面操作
-        BookOperation(Icons.Rounded.PhotoCamera, stringResource(if(b.hasCover == 1) R.string.cancel_cover else R.string.first_page_cover) ){
+        BookOperation(if(b.hasCover == 1) Icons.Rounded.PhotoSizeSelectLarge else Icons.Rounded.AddPhotoAlternate, stringResource(if(b.hasCover == 1) R.string.cancel_cover else R.string.first_page_cover) ){
             scope.launch {
                 if(b.hasCover == 0){
                     val f = PdfPageLoader.loadFirstPageAsCover(b.id, ctx, h)//create cover file
@@ -303,7 +304,7 @@ fun BookOperations(b: Book, h: Int, onDel: (b: Book)->Unit, setCover: (cover: Fi
         }
 
         //暗黑模式切换
-        BookOperation(Icons.Rounded.DarkMode, stringResource(if(disableDarkMode) R.string.enable_dark_mode else R.string.disable_dark_mode) ){
+        BookOperation(if(disableDarkMode) Icons.Rounded.Brightness4  else Icons.Rounded.Brightness1, stringResource(if(disableDarkMode) R.string.enable_dark_mode else R.string.disable_dark_mode) ){
             scope.launch {
                 if(b.disableDarkMode == 1){
                     b.disableDarkMode = 0
@@ -317,7 +318,7 @@ fun BookOperations(b: Book, h: Int, onDel: (b: Book)->Unit, setCover: (cover: Fi
         }
 
         //切换quality BookOperation后面跟lambda，每次运行时里面捕捉到的quality变量值是运行时上次更新的quality生效之前的值
-        BookOperation(Icons.Rounded.DisplaySettings, stringResource(quality2ResId(quality.value)) ){
+        BookOperation(Icons.Rounded.LensBlur, stringResource(quality2ResId(quality.value)) ){
             scope.launch {
                 //这里必须使用updatedQuality，不能使用quality，因为lambda中捕捉到的变量值都是上一次更新生效之前的值，而不是更新后的值，
                 // 通过使用引用，可以使用最新值。updatedQuality相当于引用，通过它访问，总是得到最新的

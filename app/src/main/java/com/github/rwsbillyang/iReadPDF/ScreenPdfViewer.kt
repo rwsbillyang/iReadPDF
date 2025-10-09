@@ -21,13 +21,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.rounded.Adjust
+import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.rounded.Fullscreen
 import androidx.compose.material.icons.rounded.FullscreenExit
-import androidx.compose.material.icons.rounded.Landscape
-import androidx.compose.material.icons.rounded.Portrait
+import androidx.compose.material.icons.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.TextRotateUp
+import androidx.compose.material.icons.rounded.TextRotationDown
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -109,7 +109,7 @@ fun ToolsBar(showPageNumberInputDlg: (show: Boolean)->Unit ,hideToolBar: ()-> Un
         return
     }
     val router = useRouter()
-    val context = LocalContext.current
+    //val context = LocalContext.current
     val window = getCurrentWindow()
 
     //zIndex(1f)大者在小者之上
@@ -119,19 +119,19 @@ fun ToolsBar(showPageNumberInputDlg: (show: Boolean)->Unit ,hideToolBar: ()-> Un
         Arrangement.SpaceAround, Alignment.Bottom){
         val w = Modifier.weight(1f)
 
-        ToolBarItem(R.string.jump, Icons.Rounded.Adjust, w){
+        ToolBarItem(R.string.jump, Icons.Rounded.OpenInNew, w){
             showPageNumberInputDlg(true)
             hideToolBar()
         }
 
 //        if(b.landscape == 1){
-//            ToolBarItem(R.string.portrait, Icons.Rounded.Portrait, w){
+//            ToolBarItem(R.string.portrait, Icons.Rounded.MobileScreenShare, w){
 //                b.landscape = 0
 //                (context as? Activity)?.setLandscape(0)
 //                hideToolBar()
 //            }
 //        }else{
-//            ToolBarItem(R.string.landscape, Icons.Rounded.Landscape, w){
+//            ToolBarItem(R.string.landscape, Icons.Rounded.ScreenRotation, w){
 //                //b.landscape = 1
 //                (context as? Activity)?.setLandscape(1)
 //                hideToolBar()
@@ -139,12 +139,12 @@ fun ToolsBar(showPageNumberInputDlg: (show: Boolean)->Unit ,hideToolBar: ()-> Un
 //        }
 
         if(b.rotation != 0){
-            ToolBarItem(R.string.portrait, Icons.Rounded.Portrait, w){
+            ToolBarItem(R.string.rotation0, Icons.Rounded.TextRotateUp, w){
                 b.rotation = 0
                 hideToolBar()
             }
         }else{
-            ToolBarItem(R.string.landscape, Icons.Rounded.Landscape, w){
+            ToolBarItem(R.string.rotation90, Icons.Rounded.TextRotationDown, w){
                 b.rotation = 90
                 hideToolBar()
             }
@@ -167,7 +167,7 @@ fun ToolsBar(showPageNumberInputDlg: (show: Boolean)->Unit ,hideToolBar: ()-> Un
         }
 
 
-        ToolBarItem(R.string.bookshelf, Icons.AutoMirrored.Filled.MenuBook, w){
+        ToolBarItem(R.string.bookshelf, Icons.AutoMirrored.Filled.LibraryBooks, w){
             router.navByName(AppConstants.AppRoutes.BookShelf)
         }
 
@@ -299,7 +299,7 @@ fun ScreenPdfViewer(call: ScreenCall) {
 
 @Composable
 fun InputDialog(title: String?, placeholder: String, keyboardType: KeyboardType, initial: String? = null, onCancel: () -> Unit, onOK: (result: String?) -> Unit){
-    Dialog(title, stringResource(id = R.string.cancel), stringResource(id = R.string.ok),
+    Dialog<String, String>(title, stringResource(id = R.string.cancel), stringResource(id = R.string.ok),
         initial, onOK, onCancel){v, notifyResult->
         //notifyResult即Dialog中的{result.value = it}，将结果赋值给Dialog中的result
 

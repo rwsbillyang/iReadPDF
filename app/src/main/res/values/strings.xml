@@ -10,6 +10,8 @@
     <string name="jump">Jump</string>
     <string name="portrait">Portrait</string>
     <string name="landscape">Landscape</string>
+    <string name="rotation0">Not Rotate</string>
+    <string name="rotation90">Rotate</string>
     <string name="cancel_cover">Del Cover</string>
 
     <string name="enable_dark_mode">Enable DarkMode</string>
