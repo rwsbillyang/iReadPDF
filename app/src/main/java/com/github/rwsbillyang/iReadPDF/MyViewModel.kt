@@ -16,6 +16,7 @@ import com.github.rwsbillyang.iReadPDF.pdfview.TAG
 
 
 class MyViewModel: ViewModel(){
+    var isFromConfigurationsChanged = false
     val shelfList = mutableStateListOf<Book>()
     var isEditingShelf = mutableStateOf(false)
     var shelfListLoaded = false

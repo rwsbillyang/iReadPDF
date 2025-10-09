@@ -59,7 +59,15 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
                 }
             }
         }
-        handleIntent(intent)
+        //来自Confiuration自行恢复路由界面,如切换深色模式，系统语言修改等
+        if(viewModel.isFromConfigurationsChanged){
+            viewModel.currentBook?.let {
+                router.navByName(AppConstants.AppRoutes.PDFViewer, it)
+            }
+        }else
+            handleIntent(intent)//其它情况处理Intent，打开指定pdf或上次pdf，或进入book shelf
+
+        viewModel.isFromConfigurationsChanged = false
     }
     override fun onPause() {
         super.onPause()
@@ -69,10 +77,11 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
 
     override fun onDestroy() {
         super.onDestroy()
-        //saveCurrentBook()
-        log("onDestroy, releasePdfLoader and shelf list")
+        viewModel.isFromConfigurationsChanged = isChangingConfigurations
+
+        //若是configuration变化导致，不可release，只有back不再前台了则需release
         if(!isChangingConfigurations){
-            //若是configuration变化导致，不可release，只有back不再前台了则需release
+            log("onDestroy, releasePdfLoader and shelf list")
             viewModel.releasePdfLoader()
             viewModel.releaseShelfList()
         }

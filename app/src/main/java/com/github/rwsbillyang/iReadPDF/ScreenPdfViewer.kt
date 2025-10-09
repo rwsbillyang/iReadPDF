@@ -224,7 +224,7 @@ fun ScreenPdfViewer(call: ScreenCall) {
                 book.total = total
             }
             override fun onPageChanged(currentPage: Int, pageOffset: Int) {
-                log("onPageChanged: currentPage=$currentPage, pageOffset=$pageOffset")
+                //log("onPageChanged: currentPage=$currentPage, pageOffset=$pageOffset")
                 book.page = currentPage
                 book.pageOffset = pageOffset
             }
