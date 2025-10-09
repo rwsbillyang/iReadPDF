@@ -22,19 +22,20 @@ Then iReadPDF app is born.
 
 ### PDFView
 - Jump to the specified page
-- Portrait/lanscape
+- rotation/no rotation of page
 - Full screen
 - Remember and restore the following states of every pdf book:
   - zoom/move
   - page
   - page offset
-  - landscape/portrait
+  - rotation/no rotation
   - fullScreen
 
 
 ### Settings
 - Whether enter the book of last reading time directly
 - Enable/disable move pdf
+- color scheme choose
 
 ## TODO
 - Show DF Content

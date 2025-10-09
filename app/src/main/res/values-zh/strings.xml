@@ -1,0 +1,64 @@
+<resources>
+    <string name="app_name">LitePDF</string>
+    <string name="help">帮助</string>
+    <string name="waiting">请稍候...</string>
+    <string name="settings">设置</string>
+    <string name="bookshelf">书架</string>
+
+
+    <string name="add_book">添加书籍</string>
+    <string name="jump">页跳转</string>
+    <string name="portrait">竖屏</string>
+    <string name="landscape">横屏</string>
+    <string name="rotation0">不旋转</string>
+    <string name="rotation90">旋转90℃</string>
+    <string name="cancel_cover">清除封面</string>
+
+    <string name="enable_dark_mode">激活深色模式</string>
+    <string name="del">从书架中移出</string>
+    <string name="del_title">移出书籍</string>
+    <string name="ok">确定</string>
+    <string name="cancel">取消</string>
+    <string name="del_desc">确定从书架中移除书籍吗？移除后可以重新添加</string>
+
+    <string name="fullscreen">全屏</string>
+    <string name="fullscreen_exit">退出全屏</string>
+
+    <string name="enter_book">直接打开书籍</string>
+    <string name="enter_book_desc">直接打开上次阅读书籍</string>
+    <string name="disable_move_pdf">禁止移动PDF</string>
+    <string name="disable_move_pdf_desc">若需在屏幕上移动PDF，则不要勾选它</string>
+    <string name="theme">主题色</string>
+    <string name="theme_default">默认</string>
+    <string name="theme_blue">蓝</string>
+    <string name="theme_green">绿</string>
+    <string name="theme_orange">橙</string>
+    <string name="theme_purple">紫</string>
+    <string name="theme_dynamic">动态(Android12+)</string>
+
+    <string name="page_number">请输入页码</string>
+
+
+
+    <string name="more_operations">更多操作</string>
+    <string name="book_settings">书籍设置</string>
+    <string name="book_settings_operation">书籍操作</string>
+    <string name="book_settings_info">书籍信息</string>
+    <string name="book_settings_render">书籍渲染</string>
+    <string name="first_page_cover">封面</string>
+    <string name="first_page_cover_desc">首页作为封面</string>
+    <string name="disable_dark_mode">禁用深色模式</string>
+    <string name="disable_dark_mode_desc">若是扫描版，在系统为深色模式，建议关闭本选项</string>
+    <string name="quality">PDF质量</string>
+    <string name="quality_h">高</string>
+    <string name="quality_m">中</string>
+    <string name="quality_l">低</string>
+    <string name="book_name">书名</string>
+    <string name="book_author">作者</string>
+    <string name="book_publisher">出版社</string>
+    <string name="last_open">上次打开时间</string>
+    <string name="reading_progress">阅读进度</string>
+    <string name="clear_book_cache">清除缓存</string>
+    <string name="clear_book_cache_desc">清除本书缓存</string>
+    <string name="clear_all_book_cache_desc">清除全部书籍缓存</string>
+</resources>

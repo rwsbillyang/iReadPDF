@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">iReadPDF</string>
+    <string name="app_name">LitePDF</string>
     <string name="help">Help</string>
     <string name="waiting">Waiting...</string>
     <string name="settings">Settings</string>
