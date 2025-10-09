@@ -61,8 +61,10 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
         }
         //来自Confiuration自行恢复路由界面,如切换深色模式，系统语言修改等
         if(viewModel.isFromConfigurationsChanged){
-            viewModel.currentBook?.let {
-                router.navByName(AppConstants.AppRoutes.PDFViewer, it)
+            if(router.currentRoute?.name == AppConstants.AppRoutes.PDFViewer){
+                viewModel.currentBook?.let {
+                    router.navByName(AppConstants.AppRoutes.PDFViewer, it)
+                }
             }
         }else
             handleIntent(intent)//其它情况处理Intent，打开指定pdf或上次pdf，或进入book shelf
