@@ -22,6 +22,8 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.LibraryBooks
+import androidx.compose.material.icons.rounded.Brightness1
+import androidx.compose.material.icons.rounded.Brightness4
 import androidx.compose.material.icons.rounded.Fullscreen
 import androidx.compose.material.icons.rounded.FullscreenExit
 import androidx.compose.material.icons.rounded.OpenInNew
@@ -117,6 +119,18 @@ fun ToolsBar(showPageNumberInputDlg: (show: Boolean)->Unit ,hideToolBar: ()-> Un
     ).background(MaterialTheme.colorScheme.surfaceVariant.copy(0.9f)).zIndex(1f),
         Arrangement.SpaceAround, Alignment.Bottom){
         val w = Modifier.weight(1f)
+
+        if(b.disableDarkMode != 0){
+            ToolBarItem(R.string.enable_dark_mode, Icons.Rounded.Brightness4, w){
+                b.disableDarkMode = 0
+                hideToolBar()
+            }
+        }else{
+            ToolBarItem(R.string.disable_dark_mode, Icons.Rounded.Brightness1, w){
+                b.disableDarkMode = 1
+                hideToolBar()
+            }
+        }
 
         ToolBarItem(R.string.jump, Icons.Rounded.OpenInNew, w){
             showPageNumberInputDlg(true)
