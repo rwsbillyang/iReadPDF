@@ -68,7 +68,6 @@ import com.github.rwsbillyang.composerouter.useRouter
 import com.github.rwsbillyang.iReadPDF.db.Book
 import com.github.rwsbillyang.iReadPDF.db.MyDao
 import com.github.rwsbillyang.iReadPDF.db.PdfQuality
-import com.github.rwsbillyang.iReadPDF.db.db
 import com.github.rwsbillyang.iReadPDF.pdfview.CacheManager
 import com.github.rwsbillyang.iReadPDF.pdfview.FileUtil
 import com.github.rwsbillyang.iReadPDF.pdfview.PdfPageLoader
@@ -83,7 +82,7 @@ fun BookShelfToolIcons(){
     val ctx =  LocalContext.current
     val viewModel: MyViewModel = LocalViewModel.current
     val scope = rememberCoroutineScope()
-    val dao = db(ctx).dao()
+    val dao = LocalDao.current
     val router = useRouter()
 
     val filePickerLauncher = rememberLauncherForActivityResult(
@@ -145,7 +144,7 @@ fun ScreenBookShelf(call: ScreenCall){
     val scope = rememberCoroutineScope()
 
     val ctx =  LocalContext.current
-    val dao = db(ctx).dao()
+    val dao = LocalDao.current
 
     //val snackbarHostState = remember { SnackbarHostState() }
     val viewModel: MyViewModel = LocalViewModel.current
@@ -276,7 +275,7 @@ fun BookGridItem(b: Book, onDel: (b: Book)->Unit){
 fun BookOperations(b: Book, h: Int, onDel: (b: Book)->Unit, setCover: (cover: File?)->Unit){
     log("enter BookOperations")
     val ctx =  LocalContext.current
-    val dao = db(ctx).dao()
+    val dao = LocalDao.current
     val scope = rememberCoroutineScope()
     //val router = useRouter()
     val (disableDarkMode, setDisableDarkMode) = remember { mutableStateOf(b.disableDarkMode == 1) }

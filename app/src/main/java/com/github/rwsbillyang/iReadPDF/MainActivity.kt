@@ -17,9 +17,9 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.lifecycle.lifecycleScope
 import com.github.rwsbillyang.composerouter.nav.LocalRoutableActivity
 import com.github.rwsbillyang.composerouter.nav.NavScaffold3
+import com.github.rwsbillyang.iReadPDF.db.AppDatabase
 import com.github.rwsbillyang.iReadPDF.db.Book
-import com.github.rwsbillyang.iReadPDF.db.db
-import com.github.rwsbillyang.iReadPDF.db.syncDb
+import com.github.rwsbillyang.iReadPDF.db.MyDao
 import com.github.rwsbillyang.iReadPDF.pdfview.FileUtil
 import com.github.rwsbillyang.iReadPDF.ui.theme.MyAppTheme
 import com.github.rwsbillyang.iReadPDF.ui.theme.ThemeEnum
@@ -34,18 +34,22 @@ import kotlinx.coroutines.launch
 // 最佳做法是遵循状态向下传递而事件向上传递的模式，只向可组合项传递所需信息。这样做会使可组合项的可重用性更高，并且更易于测试。
 //注: 在编写通用Composable库时，不应该使用LocalViewModal。但本例中，各Composable都需要ViewModel，恰恰与上面说法相反，故使用这种方式
 val LocalViewModel = staticCompositionLocalOf{ MyViewModel() }
+val LocalDataBase = staticCompositionLocalOf<AppDatabase>{ error("LocalDataBase not provided in composition!") }
+val LocalDao = staticCompositionLocalOf<MyDao>{ error("LocalDao not provided in composition!") }
 
 
 class MainActivity : LocalRoutableActivity() { //use local router if use LocalRoutableActivity
 
     private val viewModel : MyViewModel by viewModels()
-
+    private lateinit var db: AppDatabase
 
     override fun getRoutes() = getAppRoutes()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        log("onCreate, get db")
+        db = AppDatabase.getInstance(this)
         setContent {
             MyAppTheme(viewModel.theme.value) {
                 // A surface container using the 'background' color from the theme
@@ -53,7 +57,10 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    CompositionLocalProvider(LocalViewModel provides viewModel) {
+                    CompositionLocalProvider(
+                        LocalViewModel provides viewModel,
+                        LocalDataBase provides db,
+                        LocalDao provides db.dao()) {
                         NavScaffold3(R.string.app_name)
                     }
                 }
@@ -71,6 +78,9 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
 
         viewModel.isFromConfigurationsChanged = false
     }
+
+    //Home键切换到主屏，然后再清除app任务列表，不会调用onDestroy，但会onPause，
+    // 故只要离开当前界面，就保存，而不是destroy时再保存
     override fun onPause() {
         super.onPause()
         log("onPause,saveCurrentBook")
@@ -79,30 +89,20 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
 
     override fun onDestroy() {
         super.onDestroy()
+        log("onDestroy， isChangingConfigurations=$isChangingConfigurations")
         viewModel.isFromConfigurationsChanged = isChangingConfigurations
 
         //若是configuration变化导致，不可release，只有back不再前台了则需release
         if(!isChangingConfigurations){
-            log("onDestroy, releasePdfLoader and shelf list")
             viewModel.releasePdfLoader()
             viewModel.releaseShelfList()
         }
 
-        syncDb(this)
+        //需要协程中的saveCurrentBook执行完毕才可close
+        //db.close()
     }
-
-
-    //在系统未经用户许可可能销毁 Activity 时调用的方法。
-    // 需要注意的是，如果用户主动销毁 Activity（例如按下返回键），则不会调用此方法。
-    //调用fileLauncher打开文件添加书籍时会调用此方法
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        log("onSaveInstanceState, set destroyByUser = false")
-    }
-
 
     private fun saveCurrentBook(){
-        val dao = db(this).dao()
         // 保存当前阅读进度
         lifecycleScope.launch {
             viewModel.currentBook?.let {
@@ -111,11 +111,13 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
                 // sharedPreferences.edit().remove(AppConstants.KEY_CURRENT).apply()
                 sharedPreferences.edit().putString(AppConstants.KEY_CURRENT, it.id).apply()
 
-                dao.updateOne(it)
+                db.dao().updateOne(it)
             }
 
-//            val count = dao.count()
+//            val count = db.dao().count()
 //            log("db books count: $count")
+
+
         }
     }
     private fun handleIntent(intent: Intent) {
@@ -133,7 +135,7 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
                 }
             }
             else -> {
-                val dao = db(this).dao()
+                val dao = db.dao()
                 val localRouter = router
                 // 打开last reading book
                 lifecycleScope.launch {

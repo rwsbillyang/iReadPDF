@@ -20,7 +20,7 @@ import kotlinx.serialization.json.Json
  * 3. 表中的字段，尽量不要用数据库的保留关键字，如：key， from等
  * 4. Entity定义为非空字段，数据库schema也要非空，需要完全对应上，注意：Entity定义中非空字段，不管有没有缺省值，数据库中都需要NOT NULL
  *
- *  在修改了数据库内容后，执行进行同步到主db上，避免再wal中：pragma wal_checkpoint(full)
+ *  在PC上修改了数据库预置内容后，执行进行同步到主db上，避免在wal中：pragma wal_checkpoint(full)
  * **/
 
 enum class PdfQuality(val id: Int){Low(R.string.quality_l), Middle(R.string.quality_m), High(R.string.quality_h),}

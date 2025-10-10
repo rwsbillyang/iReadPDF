@@ -214,7 +214,7 @@ fun ScreenPdfViewer(call: ScreenCall) {
     val window = getCurrentWindow()
 
     LaunchedEffect(book){
-        viewModel.onBookMaybeChanged(book, ctx)
+        viewModel.updateCurrentBook(book, ctx)
 
         window?.setFullScreen(book.fullScreen == 1)
         (ctx as? Activity)?.setLandscape(book.landscape)
@@ -346,7 +346,7 @@ fun <T, R> MyDialog(
     val currentResult = rememberUpdatedState(result.value)
     Dialog(onDismissRequest = { onCancel() }) {
         Card(Modifier.fillMaxWidth().height(250.dp).graphicsLayer(
-            rotationZ = rotation.toFloat()//toolbar跟随旋转
+            rotationZ = rotation.toFloat()//跟随旋转
         ).padding(16.dp),
             shape = RoundedCornerShape(10.dp),
         ){

@@ -36,12 +36,7 @@ class MyViewModel: ViewModel(){
         get() = _pdfPageLoader.value
 
 
-    private fun updateCurrentBook(b: Book){
-        b.lastOpen = System.currentTimeMillis()
-        _currentBook.value = b
-    }
-
-    suspend fun onBookMaybeChanged(book: Book, ctx: Context){
+    suspend fun updateCurrentBook(book: Book, ctx: Context){
         if(book.id != _currentBook.value?.id){
             _pdfPageLoader.value?.apply {
                 Log.d(TAG, "reset pdfPageLoader")
@@ -63,11 +58,12 @@ class MyViewModel: ViewModel(){
             _loadingPdf.value = false
         }else
             Log.d(TAG, "not need to re-create pdfPageLoader")
-        updateCurrentBook(book)
+
+
+        book.lastOpen = System.currentTimeMillis()
+        _currentBook.value = book
     }
-    fun updateLandScape(landscape: Int) {
-        _currentBook.value?.let { it.landscape = landscape }?:Log.w(TAG, "currentBook is null")
-    }
+
     fun updateTransformState(zoom: Float, x: Float, y: Float) {
         _currentBook.value?.let {
             it.zoom *= zoom

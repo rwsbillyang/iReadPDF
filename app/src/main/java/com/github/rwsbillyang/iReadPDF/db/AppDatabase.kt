@@ -8,44 +8,55 @@ import java.io.FileOutputStream
 
 @Database(entities = [
     Book::class,
-], version = 1, exportSchema = false)
+], version = 1, exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun dao(): MyDao
 
     companion object {
         private var INSTANCE: AppDatabase? = null
         fun getInstance(context: Context): AppDatabase {
-            synchronized(this) {
-                var instance = INSTANCE
-                if (instance == null) {
-                    instance = Room.databaseBuilder(
-                        context.applicationContext,
-                        AppDatabase::class.java,
-                        "app.db"
-                    ).createFromAsset("app.db")
-                        .fallbackToDestructiveMigration()
-                        .build()
-                    INSTANCE = instance
+            return INSTANCE ?: synchronized(this) {
+                val instance = Room.databaseBuilder(
+                    context.applicationContext,
+                    AppDatabase::class.java,
+                    "app.db"
+                )//.setJournalMode(RoomDatabase.JournalMode.AUTOMATIC)
+                    .build()//.createFromAsset("app.db")//有预置数据时需要
+                INSTANCE = instance
+                instance
+            }
+        }
+
+        /**
+         * 添加完books到数据库，再退出app后，再clear app历史记录，导致添加到db中的books丢失
+         * 若不清除系统刚使用过的app，则不会丢失
+         * 问题依然如此，在huawei pad也是同样的问题
+         * TODO：诡异的是，在MainActivity.onDestroy中saveCurrentBook并调用此close后恢复正常，不丢失数据
+         * 然后再修改回原代码，不调用此函数，saveCurrentBook放回到onPause中，不再close，注释掉此函数，依旧正常
+         * 编译环境，清除缓存的问题？但也没有明显的清除编译环境或更换环境呀
+         * 就像使用ComposeRouter时总提示 Navbar 这个composable函数转换成普通的Function异常，经过 gradle clean ComposeRouter后恢复正常一样？
+         *
+         * 还有Eyesight这个app 最先只能targetSDK 13，否则scale时锯齿，后来又突然好了，任何targetSDK都正常？
+         * */
+        fun close(){
+            synchronized(this){
+                INSTANCE?.apply {
+                    FileOutputStream(openHelper.writableDatabase.path).apply {
+                        flush()
+                        fd.sync()
+                    }
+                    if(isOpen)close()
                 }
-                return instance
+                INSTANCE = null
             }
         }
     }
 }
 
-fun db(applicationContext: Context) = AppDatabase.getInstance(applicationContext)
+//fun db(ctx: Context) = AppDatabase.getInstance(ctx)
 
-/**
- * 添加完books到数据库，再退出app后，再clear app历史记录，导致添加到db中的books丢失
- * 若不清除系统刚使用过的app，则不会丢失
- * TODO：问题依然如旧
- * */
-fun syncDb(applicationContext: Context) {
-    FileOutputStream(db(applicationContext).openHelper.writableDatabase.path).apply {
-        flush()
-        fd.sync()
-    }
-}
+
+
 //fun db(applicationContext: Context) = Room.databaseBuilder(
 //    applicationContext,
 //    AppDatabase::class.java, "app.db"

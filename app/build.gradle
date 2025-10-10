@@ -31,6 +31,7 @@ android {
             }
         }
 
+        // Room 2.6.0 +
         //https://developer.android.google.cn/jetpack/androidx/releases/room?hl=zh-cn
 //        room {
 //            schemaDirectory "$projectDir/schemas"

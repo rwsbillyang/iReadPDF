@@ -15,7 +15,6 @@ import androidx.compose.ui.res.stringResource
 import com.github.rwsbillyang.composerouter.ScreenCall
 import com.github.rwsbillyang.iReadPDF.db.Book
 import com.github.rwsbillyang.iReadPDF.db.PdfQuality
-import com.github.rwsbillyang.iReadPDF.db.db
 import com.github.rwsbillyang.iReadPDF.pdfview.CacheManager
 import com.jamal.composeprefs3.ui.PrefsScreen
 import com.jamal.composeprefs3.ui.prefs.CheckBoxPref
@@ -47,7 +46,7 @@ fun ScreenBookSettings(call: ScreenCall) {
 
     val scope = rememberCoroutineScope()
     val ctx =  LocalContext.current
-    val dao = db(ctx).dao()
+    val dao = LocalDao.current
     val groupNameRender = stringResource(id = R.string.book_settings_render)
     val groupNameOperation = stringResource(id = R.string.book_settings_operation)
     val groupNameInfo = stringResource(id = R.string.book_settings_info)
