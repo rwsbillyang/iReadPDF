@@ -31,13 +31,18 @@ abstract class AppDatabase : RoomDatabase() {
          * 添加完books到数据库，再退出app后，再clear app历史记录，导致添加到db中的books丢失
          * 若不清除系统刚使用过的app，则不会丢失
          * 问题依然如此，在huawei pad也是同样的问题
-         * TODO：诡异的是，在MainActivity.onDestroy中saveCurrentBook并调用此close后恢复正常，不丢失数据
-         * 然后再修改回原代码，不调用此函数，saveCurrentBook放回到onPause中，不再close，注释掉此函数，依旧正常
-         * 编译环境，清除缓存的问题？但也没有明显的清除编译环境或更换环境呀
-         * 就像使用ComposeRouter时总提示 Navbar 这个composable函数转换成普通的Function异常，经过 gradle clean ComposeRouter后恢复正常一样？
+         *
+         * 经对比测试，在各个地方使用下面这种方式获取db会出现问题，
+         * fun db(ctx: Context) = AppDatabase.getInstance(ctx)
+         * 而在MainActivity.onCreated中获取db并通过CompositionLocal provide的方式去使用db，则没有问题，数据不会丢失
+         *
+         * 另：
+         * 使用ComposeRouter时曾经总提示 Navbar 这个composable函数转换成普通的Function异常，经过 gradle clean ComposeRouter后恢复正常
          *
          * 还有Eyesight这个app 最先只能targetSDK 13，否则scale时锯齿，后来又突然好了，任何targetSDK都正常？
          * */
+
+        @Deprecated("Not necessary. If use it, all db operations finished, then call it")
         fun close(){
             synchronized(this){
                 INSTANCE?.apply {
@@ -53,6 +58,7 @@ abstract class AppDatabase : RoomDatabase() {
     }
 }
 
+//可以正常操作db，但db在清除任务列表后，再次打开app数据会丢失
 //fun db(ctx: Context) = AppDatabase.getInstance(ctx)
 
 

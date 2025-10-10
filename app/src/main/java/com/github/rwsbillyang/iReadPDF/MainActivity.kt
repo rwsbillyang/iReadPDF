@@ -60,7 +60,8 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
                     CompositionLocalProvider(
                         LocalViewModel provides viewModel,
                         LocalDataBase provides db,
-                        LocalDao provides db.dao()) {
+                        LocalDao provides db.dao())
+                    {
                         NavScaffold3(R.string.app_name)
                     }
                 }
