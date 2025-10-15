@@ -34,15 +34,15 @@ class PdfPageLoader(
     private var currentPage: PdfRenderer.Page? = null
 
     companion object{
-        suspend fun create(fd: ParcelFileDescriptor, fileId: String, ctx: Context, cacheStrategy: CacheStrategy) = withContext(Dispatchers.IO){
-            PdfPageLoader(PdfRenderer(fd), fd, CacheManager(ctx, fileId, cacheStrategy))
+        fun create(fd: ParcelFileDescriptor, fileId: String, ctx: Context, cacheStrategy: CacheStrategy):PdfPageLoader{
+            return PdfPageLoader(PdfRenderer(fd), fd, CacheManager(ctx, fileId, cacheStrategy))
         }
 
 
         /**
          * @param pdfFile: files/_pdf_/$md5.pdf
          * */
-        suspend fun create(pdfFile: File, fileId: String, ctx: Context, cacheStrategy: CacheStrategy):PdfPageLoader?{
+        fun create(pdfFile: File, fileId: String, ctx: Context, cacheStrategy: CacheStrategy):PdfPageLoader?{
             if(!pdfFile.exists()){
                 return null
             }
@@ -94,9 +94,9 @@ class PdfPageLoader(
     }
 
     private fun preloadPageDimension() {
+        Log.d(TAG, "preloadPageDimension")
         val page = pdfRenderer.openPage(0)
         pageSize = Size(page.width, page.height)
-        Log.d(TAG, "preloadPageDimension: page.width=${page.width}, page.height=${page.height}")
         page.close()
     }
 
@@ -136,7 +136,7 @@ class PdfPageLoader(
 //            val height = (lazyItemWidth / aspectRatio).toInt()
 
             renderLock.withLock {
-                //val renderedBitmap = BitmapPool.getBitmap(lazyItemWidth, maxOf(10, height))
+                Log.d(TAG, "openPage $page")
                 currentPage = pdfRenderer.openPage(page)
                 currentPage?.let {pdfPage ->
                     Log.d(TAG, "pdfRenderer.openPage $page: pdfPage.width=${pdfPage.width}, pdfPage.height=${pdfPage.height}, quality=$quality")

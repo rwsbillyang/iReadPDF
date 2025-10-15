@@ -41,6 +41,7 @@ Then iReadPDF app is born.
 - Show DF Content
 - Jump when click item in content
 - Text selection and copy
+- Not copy PDF file when add book into shelf
 
 
 ## Problems

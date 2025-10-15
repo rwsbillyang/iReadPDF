@@ -139,8 +139,6 @@ suspend fun handleSelectedPdfUri(ctx: Context, dao: MyDao, viewModel: MyViewMode
 //主屏
 @Composable
 fun ScreenBookShelf(call: ScreenCall){
-    log("enter ScreenBookShelf")
-
     val scope = rememberCoroutineScope()
 
     val ctx =  LocalContext.current
@@ -210,7 +208,6 @@ fun ScreenBookShelf(call: ScreenCall){
 //书籍竖直列表格
 @Composable
 fun BooksGrid(list: List<Book>, onDelOne: (b: Book)->Unit){
-    log("enter BooksGrid")
     LazyVerticalGrid(
         GridCells.Adaptive(minSize = 96.dp),
         Modifier.padding(15.dp),
@@ -230,7 +227,6 @@ fun BookGridItem(b: Book, onDel: (b: Book)->Unit){
     val viewModel: MyViewModel = LocalViewModel.current
     val router = useRouter()
     val ctx =  LocalContext.current
-    log("enter BookGridItem")
     val (cover, setCover) = remember { mutableStateOf(if(b.hasCover == 1) b.cover(ctx) else null) }
     Column(Modifier.height(200.dp).wrapContentWidth(Alignment.CenterHorizontally)
             .pointerInput(Unit) {
@@ -273,7 +269,6 @@ fun BookGridItem(b: Book, onDel: (b: Book)->Unit){
 
 @Composable
 fun BookOperations(b: Book, h: Int, onDel: (b: Book)->Unit, setCover: (cover: File?)->Unit){
-    log("enter BookOperations")
     val ctx =  LocalContext.current
     val dao = LocalDao.current
     val scope = rememberCoroutineScope()
@@ -352,7 +347,6 @@ fun quality2ResId(quality: PdfQuality) = when(quality)
 
 @Composable
 fun BookOperation(icon: ImageVector, label: String, onClick: ()->Unit){
-    log("enter BookOperation $label")
     Row(Modifier.fillMaxWidth().wrapContentHeight().padding(horizontal = 3.dp).pointerInput(Unit) {
                 detectTapGestures(
                     onTap = { onClick() },

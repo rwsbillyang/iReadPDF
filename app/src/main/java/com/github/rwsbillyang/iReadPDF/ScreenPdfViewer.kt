@@ -204,105 +204,117 @@ fun ScreenPdfViewer(call: ScreenCall) {
 
     val ctx = LocalContext.current
     val viewModel: MyViewModel = LocalViewModel.current
+    val dao = LocalDao.current
+    val window = getCurrentWindow()
 
+    var loadingPdf by remember(book.id){ mutableStateOf(book.id != viewModel.currentBook?.id) }
+    //书籍切换时，必须先释放旧有的pdfPageLoader，创建新的后，才可渲染BookView，
+    // 不可边修改边创建同时渲染BookView，
+    LaunchedEffect(book.id){
+        viewModel.updateCurrentBook(dao, book, ctx)
+        loadingPdf = false
+        window?.setFullScreen(book.fullScreen == 1)
+        (ctx as? Activity)?.setLandscape(book.landscape)
+    }
+
+    if(loadingPdf){
+        Column(Modifier.fillMaxSize().padding(call.scaffoldPadding),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            CircularProgressIndicator()
+        }
+    }else{
+        if(viewModel.pdfPageLoader == null){
+            Column(Modifier.fillMaxSize().padding(call.scaffoldPadding),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("Load PDF fail: no file")
+            }
+        }else{
+            BookViewer(book, viewModel, call)
+        }
+    }
+}
+
+@Composable
+fun BookViewer(book: Book, viewModel: MyViewModel, call: ScreenCall){
+    val statusCallBack = object : StatusCallBack {
+        override fun onTotalPages(total: Int) {
+            book.total = total
+        }
+        override fun onPageChanged(currentPage: Int, pageOffset: Int) {
+            //log("onPageChanged: currentPage=$currentPage, pageOffset=$pageOffset")
+            book.page = currentPage
+            book.pageOffset = pageOffset
+        }
+        override fun onTransformStateChanged(zoomChange: Float, moveX: Float, moveY: Float, rotationChange: Float) {
+            viewModel.updateTransformState(zoomChange, moveX, moveY)
+        }
+    }
     var showToolsBar by remember { mutableStateOf(false) }
 
     var showInputPageNumber by remember { mutableStateOf(false) }
     var pageNumber by remember { mutableStateOf<Int?>(null) }
 
 
-    val window = getCurrentWindow()
+    Box(modifier = Modifier.fillMaxSize().padding(call.scaffoldPadding)
+        .pointerInput(Unit) { detectTapGestures(onTap = { showToolsBar = !showToolsBar }) }
+        .layout { measurable, constraints ->
+            //若旋转90度，对宽高进行置换
+            val newConstraints =
+                if (book.rotation == 90 || book.rotation == -90 || book.rotation == 270) {
+                    constraints.copy(
+                        minWidth = constraints.minHeight,
+                        maxWidth = constraints.maxHeight,
+                        minHeight = constraints.minWidth,
+                        maxHeight = constraints.maxWidth
+                    )
+                } else {
+                    constraints
+                }
 
-    LaunchedEffect(book){
-        viewModel.updateCurrentBook(book, ctx)
+            //measurable代表着"具备可测量能力的"，即当前的box，经过measure之后，得到一个"具备可置放能力的"placeable
+            val placeable = measurable.measure(newConstraints)
+            //log("layout: rotation=${book.rotation},constraints:minWidth=${constraints.minWidth}, maxWidth=${constraints.maxWidth}, minHeight=${constraints.minHeight}, maxHeight=${constraints.maxHeight}, placeable.width=${placeable.width}, placeable.height=${placeable.height}")
 
-        window?.setFullScreen(book.fullScreen == 1)
-        (ctx as? Activity)?.setLandscape(book.landscape)
-    }
-
-    if(viewModel.pdfPageLoader == null){
-        Column(Modifier.fillMaxSize().padding(call.scaffoldPadding),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            if (viewModel.loadingPdf)
-                CircularProgressIndicator()
-            else
-                Text("Load PDF fail: no file")
-        }
-    }else{
-        val statusCallBack = object : StatusCallBack {
-            override fun onTotalPages(total: Int) {
-                book.total = total
-            }
-            override fun onPageChanged(currentPage: Int, pageOffset: Int) {
-                //log("onPageChanged: currentPage=$currentPage, pageOffset=$pageOffset")
-                book.page = currentPage
-                book.pageOffset = pageOffset
-            }
-            override fun onTransformStateChanged(zoomChange: Float, moveX: Float, moveY: Float, rotationChange: Float) {
-                viewModel.updateTransformState(zoomChange, moveX, moveY)
-            }
+            //根据placeable中的置放数据，进行layout后，返回MeasureResult对组件进行重新布局layout
+            layout(placeable.width, placeable.height) { placeable.placeRelative(0, 0) }
         }
 
-
-        Box(modifier = Modifier.fillMaxSize().padding(call.scaffoldPadding)
-            .pointerInput(Unit) { detectTapGestures(onTap = { showToolsBar = !showToolsBar }) }
-            .layout { measurable, constraints ->
-                //若旋转90度，对宽高进行置换
-                val newConstraints =
-                    if (book.rotation == 90 || book.rotation == -90 || book.rotation == 270) {
-                        constraints.copy(
-                            minWidth = constraints.minHeight,
-                            maxWidth = constraints.maxHeight,
-                            minHeight = constraints.minWidth,
-                            maxHeight = constraints.maxWidth
-                        )
-                    } else {
-                        constraints
-                    }
-
-                //measurable代表着"具备可测量能力的"，即当前的box，经过measure之后，得到一个"具备可置放能力的"placeable
-                val placeable = measurable.measure(newConstraints)
-                //log("layout: rotation=${book.rotation},constraints:minWidth=${constraints.minWidth}, maxWidth=${constraints.maxWidth}, minHeight=${constraints.minHeight}, maxHeight=${constraints.maxHeight}, placeable.width=${placeable.width}, placeable.height=${placeable.height}")
-
-                //根据placeable中的置放数据，进行layout后，返回MeasureResult对组件进行重新布局layout
-                layout(placeable.width, placeable.height) { placeable.placeRelative(0, 0) }
-            }
-
-            ,Alignment.Center //若将Toolbar放在底部，全屏后无法正确显示出来（可能布局变化，导致在底部屏幕之外）
+        ,Alignment.Center //若将Toolbar放在底部，全屏后无法正确显示出来（可能布局变化，导致在底部屏幕之外）
+    )
+    {
+        PdfView(
+            viewModel.pdfPageLoader!!,
+            book,
+            Modifier.fillMaxSize().zIndex(0f),
+            statusCallBack,
+            viewModel.disableMovePdf
         )
-        {
-            PdfView(
-                viewModel.pdfPageLoader!!,
-                book,
-                Modifier.fillMaxSize().zIndex(0f),
-                statusCallBack,
-                viewModel.disableMovePdf
-            )
 
-            if(showToolsBar){
-                ToolsBar({showInputPageNumber = it}){showToolsBar = false}
-            }
-            if(showInputPageNumber){
-                InputDialog(book.rotation, stringResource(id = R.string.page_number), "0~${book.total}", KeyboardType.Number, onCancel = {showInputPageNumber = false}){
-                    showInputPageNumber = false
-                    log("got page number $it")
-                    if(!it.isNullOrEmpty()){
-                        try{
-                            val n = it.toInt()
-                            if (n >= 0 && n < viewModel.pdfPageLoader!!.pageCount) {
-                                book.page = n
-                                book.pageOffset = 0
-                                if (book.rotation == 90 || book.rotation == -90 || book.rotation == 270)
-                                    book.offsetX = 0f
-                                else
-                                    book.offsetY = 0f
-                                pageNumber = n
-                            }
-                        }catch (e: NumberFormatException ){
-                            Log.w(TAG, "invalid number $it")
+        if(showToolsBar){
+            ToolsBar({showInputPageNumber = it}){showToolsBar = false}
+        }
+        if(showInputPageNumber){
+            InputDialog(book.rotation, stringResource(id = R.string.page_number), "0~${book.total}", KeyboardType.Number, onCancel = {showInputPageNumber = false}){
+                showInputPageNumber = false
+                log("got page number $it")
+                if(!it.isNullOrEmpty()){
+                    try{
+                        val n = it.toInt()
+                        if (n >= 0 && n < viewModel.pdfPageLoader!!.pageCount) {
+                            book.page = n
+                            book.pageOffset = 0
+                            if (book.rotation == 90 || book.rotation == -90 || book.rotation == 270)
+                                book.offsetX = 0f
+                            else
+                                book.offsetY = 0f
+                            pageNumber = n
                         }
+                    }catch (e: NumberFormatException ){
+                        Log.w(TAG, "invalid number $it")
                     }
                 }
             }

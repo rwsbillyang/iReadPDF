@@ -8,7 +8,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.github.rwsbillyang.iReadPDF.db.Book
-import com.github.rwsbillyang.iReadPDF.db.PdfQuality
+import com.github.rwsbillyang.iReadPDF.db.MyDao
 import com.github.rwsbillyang.iReadPDF.pdfview.CacheStrategy
 import com.github.rwsbillyang.iReadPDF.pdfview.LocalUri
 import com.github.rwsbillyang.iReadPDF.pdfview.PdfPageLoader
@@ -27,24 +27,22 @@ class MyViewModel: ViewModel(){
         get() = _currentBook.value
 
 
-    private val _loadingPdf = mutableStateOf(true)
-    val loadingPdf:Boolean
-        get() = _loadingPdf.value
-
     private val _pdfPageLoader = mutableStateOf<PdfPageLoader?>(null)
     val pdfPageLoader: PdfPageLoader?
         get() = _pdfPageLoader.value
 
 
-    suspend fun updateCurrentBook(book: Book, ctx: Context){
+    suspend fun updateCurrentBook(dao: MyDao, book: Book, ctx: Context){
+        //下面的执行必须串行化，先释放旧的再创建新的
         if(book.id != _currentBook.value?.id){
+            _currentBook.value?.let{dao.updateOne(it)}//切换了book，需要保存原有的
             _pdfPageLoader.value?.apply {
                 Log.d(TAG, "reset pdfPageLoader")
                 releasePdfLoader()
             }
-            //临时打开的pdf不缓存其页面
+
             val cacheStrategy = if(book.cachePages) CacheStrategy.MAXIMIZE_PERFORMANCE else CacheStrategy.DISABLE_CACHE
-            if(book.uri != null){//通常为空
+            if(book.uri != null){//通常为空 //临时打开的pdf不缓存其页面
                 val source = LocalUri.create(book.uri!!, ctx)
                 if(source.fd != null ||  source.fileId != null){
                     _pdfPageLoader.value = PdfPageLoader.create(source.fd!!, source.fileId!!, ctx, cacheStrategy).apply { preload() }
@@ -55,7 +53,6 @@ class MyViewModel: ViewModel(){
                     _pdfPageLoader.value = this
                 }
             }
-            _loadingPdf.value = false
         }else
             Log.d(TAG, "not need to re-create pdfPageLoader")
 
