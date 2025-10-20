@@ -3,6 +3,7 @@ package com.github.rwsbillyang.iReadPDF.pdfview
 import android.app.Activity
 import android.content.pm.ActivityInfo
 import android.view.Window
+import android.view.WindowManager
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 
@@ -22,6 +23,7 @@ fun Window.setFullScreen(enabled: Boolean){
         }
     }
 }
+fun Window.setScreenOn(state: Boolean) = if(state) addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) else clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
 fun Activity.setLandscape(landscape: Int){
     requestedOrientation = if(landscape == 1) ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE else ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT

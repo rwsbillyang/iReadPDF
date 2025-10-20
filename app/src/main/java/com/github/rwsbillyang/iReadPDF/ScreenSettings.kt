@@ -53,7 +53,30 @@ fun SettingsScreen(paddingValues: PaddingValues) {
                     onCheckedChange = {v-> viewModel.disableMovePdf = v},
                     enabled = true)
             }
-
+            prefsItem {
+                val minutes = stringResource(id = R.string.minutes)
+                DropDownPref(
+                    key = AppConstants.SettingsKey.KeepScreenOn,
+                    title = stringResource(id = R.string.keep_screen_on),
+                    textColor = MaterialTheme.colorScheme.primary,
+                    useSelectedAsSummary = true,
+                    entries = mapOf(
+                        "0" to stringResource(id = R.string.follow_system),
+                        "1" to "1 $minutes",
+                        "2" to "2 $minutes",
+                        "3" to "3 $minutes",
+                        "4" to "4 $minutes",
+                        "5" to "5 $minutes",
+                        "10" to "10 $minutes",
+                        "20" to "20 $minutes",
+                        "30" to "30 $minutes"
+                        ),
+                    defaultValue = "0",
+                    onValueChange = {
+                        viewModel.screenOn.value = it.toInt()
+                    }
+                )
+            }
             prefsItem {
                 DropDownPref(
                     key = AppConstants.SettingsKey.Theme,

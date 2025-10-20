@@ -33,9 +33,10 @@ Then iReadPDF app is born.
 
 
 ### Settings
-- Whether enter the book of last reading time directly
+- Can set whether enter the book of last reading time directly
 - Enable/disable move pdf
-- color scheme choose
+- Keeping screen on can be set
+- Support color scheme
 
 ## TODO
 - Show DF Content
@@ -45,6 +46,6 @@ Then iReadPDF app is born.
 
 
 ## Problems
-- In dark mode, text font color in toolbar of pdfview takes not effect
 - Not smooth when scroll pdf in landscape mode
 - The user experience of move pdf view is not good
+- In dark mode, some text font colors in toolbar of pdfview takes not effect

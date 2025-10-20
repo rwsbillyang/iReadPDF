@@ -139,7 +139,7 @@ class PdfPageLoader(
                 Log.d(TAG, "openPage $page")
                 currentPage = pdfRenderer.openPage(page)
                 currentPage?.let {pdfPage ->
-                    Log.d(TAG, "pdfRenderer.openPage $page: pdfPage.width=${pdfPage.width}, pdfPage.height=${pdfPage.height}, quality=$quality")
+                    //Log.d(TAG, "pdfRenderer.openPage $page: pdfPage.width=${pdfPage.width}, pdfPage.height=${pdfPage.height}, quality=$quality")
                     val renderedBitmap = BitmapPool.getBitmap((pdfPage.width * quality).toInt(), (pdfPage.height * quality).toInt())
                     pdfPage.render(
                         renderedBitmap,

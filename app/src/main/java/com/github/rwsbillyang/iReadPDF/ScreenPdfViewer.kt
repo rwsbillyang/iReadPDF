@@ -233,13 +233,19 @@ fun ScreenPdfViewer(call: ScreenCall) {
                 Text("Load PDF fail: no file")
             }
         }else{
-            BookViewer(book, viewModel, call)
+            if(viewModel.screenOn.value > 0){
+                AutoDismissScreenKeepAlive(viewModel.screenOn.value*60*1000,  Modifier.fillMaxSize().padding(call.scaffoldPadding)){
+                    BookViewer(book, viewModel, Modifier.fillMaxSize())
+                }
+            }else{
+                BookViewer(book, viewModel, Modifier.fillMaxSize().padding(call.scaffoldPadding))
+            }
         }
     }
 }
 
 @Composable
-fun BookViewer(book: Book, viewModel: MyViewModel, call: ScreenCall){
+fun BookViewer(book: Book, viewModel: MyViewModel, modifier: Modifier){
     val statusCallBack = object : StatusCallBack {
         override fun onTotalPages(total: Int) {
             book.total = total
@@ -259,7 +265,7 @@ fun BookViewer(book: Book, viewModel: MyViewModel, call: ScreenCall){
     var pageNumber by remember { mutableStateOf<Int?>(null) }
 
 
-    Box(modifier = Modifier.fillMaxSize().padding(call.scaffoldPadding)
+    Box(modifier = modifier
         .pointerInput(Unit) { detectTapGestures(onTap = { showToolsBar = !showToolsBar }) }
         .layout { measurable, constraints ->
             //若旋转90度，对宽高进行置换

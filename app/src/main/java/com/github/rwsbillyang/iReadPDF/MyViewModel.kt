@@ -86,5 +86,5 @@ class MyViewModel: ViewModel(){
     var enterBookDirectly = false
     var disableMovePdf = true
     var theme = mutableStateOf(ThemeEnum.Default)
-
+    var screenOn = mutableStateOf(0) //minutes of keeping screen on
 }

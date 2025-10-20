@@ -181,6 +181,7 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
         val p = dataStore.data.first()
         viewModel.enterBookDirectly = p[booleanPreferencesKey(AppConstants.SettingsKey.EnterBookDirectly)]?:false
         viewModel.disableMovePdf = p[booleanPreferencesKey(AppConstants.SettingsKey.DisableMovePdf)]?:true
+        viewModel.screenOn.value = p[stringPreferencesKey(AppConstants.SettingsKey.KeepScreenOn)]?.toInt()?:0
         viewModel.theme.value = p[stringPreferencesKey(AppConstants.SettingsKey.Theme)]?.let { ThemeEnum.valueOf(it) }?: ThemeEnum.Default
     }
 }
