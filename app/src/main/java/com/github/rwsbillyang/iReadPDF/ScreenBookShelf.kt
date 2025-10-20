@@ -3,6 +3,7 @@ package com.github.rwsbillyang.iReadPDF
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -177,6 +178,11 @@ fun ScreenBookShelf(call: ScreenCall){
                 }
             }
         }else{
+            // 若是编辑模式，按返回键则退出编辑模式
+            BackHandler(viewModel.isEditingShelf.value) {
+                viewModel.isEditingShelf.value = false
+            }
+
             BooksGrid(viewModel.shelfList){
                 setDelRow(it)
             }
@@ -232,6 +238,7 @@ fun BookGridItem(b: Book, onDel: (b: Book)->Unit){
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = { router.navByName(AppConstants.AppRoutes.PDFViewer, b) },
+                    onLongPress = { viewModel.isEditingShelf.value = true }
                 )
             },
         verticalArrangement = Arrangement.Bottom,
