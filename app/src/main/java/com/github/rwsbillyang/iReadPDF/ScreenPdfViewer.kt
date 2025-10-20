@@ -298,7 +298,10 @@ fun BookViewer(book: Book, viewModel: MyViewModel, call: ScreenCall){
             ToolsBar({showInputPageNumber = it}){showToolsBar = false}
         }
         if(showInputPageNumber){
-            InputDialog(book.rotation, stringResource(id = R.string.page_number), "0~${book.total}", KeyboardType.Number, onCancel = {showInputPageNumber = false}){
+            InputDialog(book.rotation, stringResource(id = R.string.page_number),
+                stringResource(id = R.string.current)+": ${book.page} in 0~${book.total}",
+                KeyboardType.Number, onCancel = {showInputPageNumber = false})
+            {
                 showInputPageNumber = false
                 log("got page number $it")
                 if(!it.isNullOrEmpty()){
