@@ -64,10 +64,8 @@ class MyViewModel: ViewModel(){
     fun updateTransformState(zoom: Float, x: Float, y: Float) {
         _currentBook.value?.let {
             it.zoom *= zoom
-            if(!disableMovePdf){
-                it.offsetX += x
-                it.offsetY += y
-            }
+            it.offsetX += x
+            it.offsetY += y
         }?:Log.w(TAG, "currentBook is null")
     }
 
@@ -84,7 +82,7 @@ class MyViewModel: ViewModel(){
 
     //settings
     var enterBookDirectly = false
-    var disableMovePdf = true
+    //var disableMovePdf = true
     var theme = mutableStateOf(ThemeEnum.Default)
     var screenOn = mutableStateOf(0) //minutes of keeping screen on
 }

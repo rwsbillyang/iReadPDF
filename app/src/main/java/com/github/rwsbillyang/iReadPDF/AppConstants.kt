@@ -23,7 +23,7 @@ object AppConstants {
 
     object SettingsKey {
         const val EnterBookDirectly = "EnterBookDirectly"
-        const val DisableMovePdf = "DisableMovePdf"
+        //const val DisableMovePdf = "DisableMovePdf"
         const val KeepScreenOn = "KeepScreenOn"
         const val Theme = "Theme"
     }

@@ -22,12 +22,11 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.LibraryBooks
-import androidx.compose.material.icons.rounded.Brightness1
-import androidx.compose.material.icons.rounded.Brightness4
 import androidx.compose.material.icons.rounded.Fullscreen
 import androidx.compose.material.icons.rounded.FullscreenExit
 import androidx.compose.material.icons.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Swipe
 import androidx.compose.material.icons.rounded.TextRotateUp
 import androidx.compose.material.icons.rounded.TextRotationDown
 import androidx.compose.material3.Card
@@ -119,14 +118,14 @@ fun ToolsBar(showPageNumberInputDlg: (show: Boolean)->Unit ,hideToolBar: ()-> Un
         Arrangement.SpaceAround, Alignment.Bottom){
         val w = Modifier.weight(1f)
 
-        if(b.disableDarkMode != 0){
-            ToolBarItem(R.string.enable_dark_mode, Icons.Rounded.Brightness4, w){
-                b.disableDarkMode = 0
+        if(b.moveable == 0){
+            ToolBarItem(R.string.movable, Icons.Rounded.Swipe, w){
+                b.moveable = 1
                 hideToolBar()
             }
         }else{
-            ToolBarItem(R.string.disable_dark_mode, Icons.Rounded.Brightness1, w){
-                b.disableDarkMode = 1
+            ToolBarItem(R.string.nonmovable, Icons.Rounded.Swipe, w){
+                b.moveable = 0
                 hideToolBar()
             }
         }
@@ -296,8 +295,7 @@ fun BookViewer(book: Book, viewModel: MyViewModel, modifier: Modifier){
             viewModel.pdfPageLoader!!,
             book,
             Modifier.fillMaxSize().zIndex(0f),
-            statusCallBack,
-            viewModel.disableMovePdf
+            statusCallBack
         )
 
         if(showToolsBar){

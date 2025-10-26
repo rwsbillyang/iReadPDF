@@ -50,8 +50,7 @@ fun PdfView(
     pdfPageLoader: PdfPageLoader,
     book: Book,
     modifier: Modifier = Modifier,
-    statusCallBack: StatusCallBack,
-    disableMovePdf: Boolean
+    statusCallBack: StatusCallBack
 ) {
     val configuration = LocalConfiguration.current
 
@@ -90,7 +89,7 @@ fun PdfView(
     var scale by remember { mutableFloatStateOf(book.zoom) }
 
     //只要禁止了move，就将其offset设为0，避免偏移
-    var offset by remember(disableMovePdf) { mutableStateOf(if(disableMovePdf) Offset(0f, 0f) else Offset(book.offsetX, book.offsetY))}
+    var offset by remember(book.moveable) { mutableStateOf(if(book.moveable == 0) Offset(0f, 0f) else Offset(book.offsetX, book.offsetY))}
 
     //val disableModePdfRef = rememberUpdatedState(disableMovePdf)
     val transformableState  = rememberTransformableState { zoomChange, offsetChange, rotationChange ->
@@ -99,7 +98,7 @@ fun PdfView(
             Offset(0f, offsetChange.x) //only support "horizontal" move  //Offset(-offsetChange.y, offsetChange.x)
         }else  Offset(offsetChange.x, 0f) //only support horizontal move //offsetChange
 
-        if(!disableMovePdf)
+        if(book.moveable == 1)
             offset += newOffset
 
         //若disableMovePdf，最终newOffset并没有记录到book的offsetX offsetY中
@@ -112,8 +111,8 @@ fun PdfView(
         scaleX = scale,
         scaleY = scale,
         rotationZ = book.rotation.toFloat(),
-        translationX = if(disableMovePdf) 0f else offset.x,
-        translationY = if(disableMovePdf) 0f else offset.y).background(MaterialTheme.colorScheme.surface)
+        translationX = if(book.moveable == 0) 0f else offset.x,
+        translationY = if(book.moveable == 0) 0f else offset.y).background(MaterialTheme.colorScheme.surface)
         .transformable(state = transformableState)
         , listState, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         items(pdfPageLoader.pageCount, { it.toString() }) { index ->

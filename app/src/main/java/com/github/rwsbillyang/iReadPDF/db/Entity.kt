@@ -58,8 +58,9 @@ class Book(
 
     var zoom: Float = 1.0f, //TransformState current reading zoom level
     var offsetX: Float = 0.0F, //TransformState offsetChange
-    var offsetY: Float = 0.0F, //TransformState offsetChange
+    var offsetY: Float = 0.0F, //@Deprecated TransformState offsetChange
     var rotation: Int = 0, //TransformState 但由工具栏命令控制
+    var moveable: Int = 1, // if 0, offsetX not take effect
 
     //设置orientation时引起configuration变化，横屏时将导致book shelf, settings等的变化，以及路由的恢复，
     //故放弃此种，采用rotation旋转90度

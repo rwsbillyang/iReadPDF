@@ -14,6 +14,9 @@
     <string name="rotation90">Rotate</string>
     <string name="cancel_cover">Del Cover</string>
 
+    <string name="movable">Movable</string>
+    <string name="nonmovable">NonMovable</string>
+
     <string name="enable_dark_mode">Enable DarkMode</string>
     <string name="del">Del from Shelf</string>
     <string name="del_title">Delete book</string>

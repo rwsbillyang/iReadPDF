@@ -25,7 +25,8 @@ Then iReadPDF app is born.
 - rotation/no rotation of page
 - Full screen
 - Remember and restore the following states of every pdf book:
-  - zoom/move
+  - zoom
+  - enable/disable move pdf
   - page
   - page offset
   - rotation/no rotation
@@ -34,7 +35,6 @@ Then iReadPDF app is born.
 
 ### Settings
 - Can set whether enter the book of last reading time directly
-- Enable/disable move pdf
 - Keeping screen on can be set
 - Support color scheme
 

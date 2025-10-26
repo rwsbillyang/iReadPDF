@@ -21,6 +21,9 @@
     <string name="cancel">取消</string>
     <string name="del_desc">确定从书架中移除书籍吗？移除后可以重新添加</string>
 
+    <string name="movable">可移动</string>
+    <string name="nonmovable">不可移动</string>
+
     <string name="fullscreen">全屏</string>
     <string name="fullscreen_exit">退出全屏</string>
 

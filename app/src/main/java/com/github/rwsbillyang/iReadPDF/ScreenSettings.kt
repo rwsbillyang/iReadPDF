@@ -58,15 +58,15 @@ fun SettingsScreen(paddingValues: PaddingValues) {
                         enabled = true)
                 }
 
-                prefsItem{
-                    CheckBoxPref(key = AppConstants.SettingsKey.DisableMovePdf,
-                        title = stringResource(id = R.string.disable_move_pdf),
-                        summary = stringResource(id = R.string.disable_move_pdf_desc),
-                        textColor = MaterialTheme.colorScheme.primary,
-                        defaultChecked = true,
-                        onCheckedChange = {v-> viewModel.disableMovePdf = v},
-                        enabled = true)
-                }
+//                prefsItem{
+//                    CheckBoxPref(key = AppConstants.SettingsKey.DisableMovePdf,
+//                        title = stringResource(id = R.string.disable_move_pdf),
+//                        summary = stringResource(id = R.string.disable_move_pdf_desc),
+//                        textColor = MaterialTheme.colorScheme.primary,
+//                        defaultChecked = true,
+//                        onCheckedChange = {v-> viewModel.disableMovePdf = v},
+//                        enabled = true)
+//                }
                 prefsItem {
                     val minutes = stringResource(id = R.string.minutes)
                     val minute = stringResource(id = R.string.minute)
