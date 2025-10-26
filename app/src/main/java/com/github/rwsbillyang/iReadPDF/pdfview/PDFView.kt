@@ -96,8 +96,8 @@ fun PdfView(
     val transformableState  = rememberTransformableState { zoomChange, offsetChange, rotationChange ->
         scale *= zoomChange
         val newOffset = if(book.rotation == 90 || book.rotation == -90 || book.rotation == 270){
-            Offset(-offsetChange.y, offsetChange.x)
-        }else offsetChange
+            Offset(0f, offsetChange.x) //only support "horizontal" move  //Offset(-offsetChange.y, offsetChange.x)
+        }else  Offset(offsetChange.x, 0f) //only support horizontal move //offsetChange
 
         if(!disableMovePdf)
             offset += newOffset
