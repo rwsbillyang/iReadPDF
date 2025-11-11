@@ -37,7 +37,7 @@ class Book(
     @PrimaryKey//(autoGenerate = true)
     val id: String,//  md5(file content)
     var name: String, // file name
-    val uriStr: String? = null, // should be null if it is a file, otherwise uri
+    var uriStr: String? = null, // should be null if it is a file, otherwise uri
     val format: String = "pdf",
     var total: Int? = null, // total pages
     var author: String? = null,

@@ -4,7 +4,9 @@ import android.content.Context
 import android.net.Uri
 import android.os.Build
 import android.os.ParcelFileDescriptor
+import android.util.Log
 import java.io.File
+import java.io.FileNotFoundException
 import java.nio.file.Files
 import java.nio.file.Paths
 
@@ -19,7 +21,7 @@ abstract class PdfSource(
 @Deprecated("Not need")
 class LocalFile(fd: ParcelFileDescriptor?, fileId: String?, displayName: String?) : PdfSource(fd, fileId, displayName) {
     companion object{
-        suspend fun create(file: File): LocalFile {
+        fun create(file: File): LocalFile {
             val fd = if(!file.exists())  null
             else{
                 val safeFile = File(sanitizeFilePath(file.path))
@@ -48,20 +50,25 @@ class LocalFile(fd: ParcelFileDescriptor?, fileId: String?, displayName: String?
 
 class LocalUri(fd: ParcelFileDescriptor?, fileId: String?, displayName: String?) : PdfSource(fd, fileId, displayName) {
     companion object{
-        suspend fun create(uri: Uri, ctx: Context): LocalUri {
-            return LocalUri(ctx.contentResolver.openFileDescriptor(uri, "r"),
-                FileUtil.calculateMd5(ctx, uri),
-                FileUtil.getFileNameFromUri(ctx, uri))
+        fun create(uri: Uri, ctx: Context): LocalUri? {
+            return try{
+                val pd = ctx.contentResolver.openFileDescriptor(uri, "r")
+                return LocalUri(pd,
+                    FileUtil.calculateMd5(ctx, uri),
+                    FileUtil.getFileNameFromUri(ctx, uri))
+            }catch (e: FileNotFoundException){
+                Log.w(TAG, "FileNotFoundException, uri=${uri.toString()}")
+                null
+            }
         }
     }
-
 }
 
 @Deprecated("Not need")
 class PdfSourceFromAsset(fd: ParcelFileDescriptor?, fileId: String?, displayName: String?) : PdfSource(fd, fileId, displayName) {
     companion object{
         //没加入book shelf 最终无法删除cache，除非全部清除缓存
-        suspend fun create(assetFileName: String, ctx: Context): PdfSourceFromAsset {
+        fun create(assetFileName: String, ctx: Context): PdfSourceFromAsset {
             val fileId = FileUtil.calculateMd5ByInputStream(ctx.assets.open(assetFileName)) ?:assetFileName
 
             val dest = CacheManager.defaultPdfFile(ctx, fileId)

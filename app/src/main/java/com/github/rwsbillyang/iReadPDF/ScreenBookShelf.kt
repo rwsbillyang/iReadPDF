@@ -1,6 +1,7 @@
 package com.github.rwsbillyang.iReadPDF
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.BackHandler
@@ -122,15 +123,24 @@ suspend fun handleSelectedPdfUri(ctx: Context, dao: MyDao, viewModel: MyViewMode
         val originalFileName = FileUtil.getFileNameFromUri(ctx, uri) ?: b?.name?: "unknown"
         //去掉文件名称后面的.pdf扩展名（不分大小写），同时文件名称中保留原始大小写
         val name = if(originalFileName.substringAfterLast('.').lowercase() == "pdf")originalFileName.substringBeforeLast('.') else originalFileName
-        val newBook = Book(it, name)
+
+        //https://yuanbao.tencent.com/chat/naQivTmsDa/6c237370-1857-4e62-ac1e-0fdcf597ccdb
+        ctx.contentResolver.takePersistableUriPermission(
+            uri,
+            Intent.FLAG_GRANT_READ_URI_PERMISSION // 仅申请读取权限
+        )
+
         if(b == null){
-            //TODO：copy一份，否则以后通过该uri加载，没有权限
-            FileUtil.copyFromUri(ctx, uri, CacheManager.defaultPdfFile(ctx, it))
+            //copy一份，否则以后通过该uri加载，没有权限
+            //FileUtil.copyFromUri(ctx, uri, CacheManager.defaultPdfFile(ctx, it))
+            val newBook = Book(it, name, uri.toString())
             dao.insertOne(newBook)
             viewModel.shelfList.add(newBook)
             log("new add book into db: $originalFileName")
         }else{
-            dao.updateOne(newBook)
+            b.name = name
+            b.uriStr = uri.toString()
+            dao.updateOne(b)
             log("update book into db: $originalFileName")
         }
     }

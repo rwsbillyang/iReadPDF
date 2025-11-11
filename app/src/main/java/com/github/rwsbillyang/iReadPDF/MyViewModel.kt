@@ -42,15 +42,20 @@ class MyViewModel: ViewModel(){
             }
 
             val cacheStrategy = if(book.cachePages) CacheStrategy.MAXIMIZE_PERFORMANCE else CacheStrategy.DISABLE_CACHE
-            if(book.uri != null){//通常为空 //临时打开的pdf不缓存其页面
-                val source = LocalUri.create(book.uri!!, ctx)
-                if(source.fd != null ||  source.fileId != null){
-                    _pdfPageLoader.value = PdfPageLoader.create(source.fd!!, source.fileId!!, ctx, cacheStrategy).apply { preload() }
-                }
-            }else{
+            val pdfFile = book.pdfFile(ctx)
+            if(pdfFile.exists()){//copy了原文件，则原文件存在，优先使用它
                 PdfPageLoader.create(book.pdfFile(ctx), book.id,  ctx, cacheStrategy)?.apply {
                     preload()
                     _pdfPageLoader.value = this
+                }
+            }else{
+                if(book.uri != null){//不再copy文件了，故uri有值非空了
+                    val source = LocalUri.create(book.uri!!, ctx)
+                    if(source?.fd != null ||  source?.fileId != null){
+                        _pdfPageLoader.value = PdfPageLoader.create(source.fd!!, source.fileId!!, ctx, cacheStrategy).apply { preload() }
+                    }
+                }else{
+                    Log.w(TAG, "book file not exists, and uri is null")
                 }
             }
         }else

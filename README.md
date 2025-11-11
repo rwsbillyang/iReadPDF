@@ -19,6 +19,7 @@ Then iReadPDF app is born.
 - Extract first page as cover, unset cover
 - Enable/disable dark mode for every pdf book
 - Support choose quality for every pdf book
+- Not need to copy PDF file when add book into shelf, and Persist READ permission automatically
 
 ### PDFView
 - Jump to the specified page
@@ -42,8 +43,6 @@ Then iReadPDF app is born.
 - Show DF Content
 - Jump when click item in content
 - Text selection and copy
-- Not copy PDF file when add book into shelf
-
 
 ## Problems
 - Not smooth when scroll pdf in landscape mode

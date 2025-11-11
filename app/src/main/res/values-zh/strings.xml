@@ -14,6 +14,8 @@
     <string name="rotation90">旋转90℃</string>
     <string name="cancel_cover">清除封面</string>
 
+    <string name="open_file_err">加载失败: 可能文件被删除</string>
+
     <string name="enable_dark_mode">激活深色模式</string>
     <string name="del">从书架中移出</string>
     <string name="del_title">移出书籍</string>

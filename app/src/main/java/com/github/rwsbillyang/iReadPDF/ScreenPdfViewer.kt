@@ -229,10 +229,10 @@ fun ScreenPdfViewer(call: ScreenCall) {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Load PDF fail: no file")
+                Text(stringResource(R.string.open_file_err))
             }
         }else{
-            if(viewModel.screenOn.value > 0){
+            if(viewModel.screenOn.value > 0){ //保持屏幕常亮一定时间后熄灭
                 AutoDismissScreenKeepAlive(viewModel.screenOn.value*60*1000,  Modifier.fillMaxSize().padding(call.scaffoldPadding)){
                     BookViewer(book, viewModel, Modifier.fillMaxSize())
                 }

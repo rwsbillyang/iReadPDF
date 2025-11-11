@@ -14,6 +14,8 @@
     <string name="rotation90">Rotate</string>
     <string name="cancel_cover">Del Cover</string>
 
+    <string name="open_file_err">Load file fail: maybe removed from storage</string>
+
     <string name="movable">Movable</string>
     <string name="nonmovable">NonMovable</string>
 
