@@ -38,4 +38,3 @@ dependencyResolutionManagement {
 }
 rootProject.name = "iReadPDF"
 include ':app'
-include ':lib'
