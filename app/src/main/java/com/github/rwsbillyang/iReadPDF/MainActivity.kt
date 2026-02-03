@@ -168,7 +168,7 @@ class MainActivity : LocalRoutableActivity() { //use local router if use LocalRo
             val id = FileUtil.calculateMd5(ctx, uri)//view model中创建PdfPageLoader通过uri打开，而不是file打开
             if(id != null){
                 val originalFileName = FileUtil.getFileNameFromUri(ctx, uri) ?: "unknown.pdf"
-                val tmpBook = Book(id, originalFileName, uri.toString()).apply {
+                val tmpBook = Book(id, originalFileName, uri.toString(), disableDarkMode=1).apply {
                     cachePages = false //临时打开的pdf不缓存其页面
                 }
                 router.navByName(AppConstants.AppRoutes.PDFViewer, tmpBook)
