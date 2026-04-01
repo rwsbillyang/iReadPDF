@@ -10,9 +10,9 @@ Then iReadPDF app is born.
 
 ## Features
 - Completely use Jetpack Compose UI
-- Small apk size using native Android API, not use any 3rd library
+- Small apk size(about 5MB) using native Android API, not use any 3rd library
 - Support large pdf file because not load all file into memory
-
+- Starts up faster and can be opened instantly even on my low-end phones(Remi 9A Notes)
 
 ### BookShelf
 - Add/remove books into/from shelf
