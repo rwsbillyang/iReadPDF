@@ -4,7 +4,10 @@ An Android PDFViewer app which can restore reading state of last time based on P
 ## Background
 It is usually impossible to read a book continuously due to the interference of various affairs or activities. 
 
-So when I read PDF books, I hope to restore the last reading state, including page position, scroll position,  zoom level, portrait or landscape, just for using the fragmented time as fully as possible. 
+So when I read PDF books, I hope I have pdf reader:
+1. No ads
+2. starts up more quickly
+3. restore the last reading state, including page position, scroll position,  zoom level, portrait or landscape, just for using the fragmented time as fully as possible. 
 
 Then iReadPDF app is born.
 
@@ -12,7 +15,7 @@ Then iReadPDF app is born.
 - Completely use Jetpack Compose UI
 - Small apk size(about 5MB) using native Android API, not use any 3rd library
 - Support large pdf file because not load all file into memory
-- Starts up faster and can be opened instantly even on my low-end phones(Remi 9A Notes)
+- Starts up more quickly, finish startup instantly even on my low-end phones(Remi 9A Notes)
 
 ### BookShelf
 - Add/remove books into/from shelf
