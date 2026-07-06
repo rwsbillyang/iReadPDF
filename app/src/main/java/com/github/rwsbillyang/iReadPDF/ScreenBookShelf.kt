@@ -27,16 +27,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AddPhotoAlternate
-import androidx.compose.material.icons.rounded.Brightness1
-import androidx.compose.material.icons.rounded.Brightness4
-import androidx.compose.material.icons.rounded.PostAdd
-import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.LensBlur
-import androidx.compose.material.icons.rounded.PhotoSizeSelectLarge
-import androidx.compose.material.icons.rounded.Settings
+
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -66,10 +57,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.github.rwsbillyang.composerouter.ScreenCall
+import com.github.rwsbillyang.composerouter.icons.IconSettings
 import com.github.rwsbillyang.composerouter.useRouter
 import com.github.rwsbillyang.iReadPDF.db.Book
 import com.github.rwsbillyang.iReadPDF.db.MyDao
 import com.github.rwsbillyang.iReadPDF.db.PdfQuality
+import com.github.rwsbillyang.iReadPDF.icons.*
+
 import com.github.rwsbillyang.iReadPDF.pdfview.CacheManager
 import com.github.rwsbillyang.iReadPDF.pdfview.FileUtil
 import com.github.rwsbillyang.iReadPDF.pdfview.PdfPageLoader
@@ -101,18 +95,18 @@ fun BookShelfToolIcons(){
     IconButton(onClick = {
         filePickerLauncher.launch(arrayOf("application/pdf") )
     }) {
-        Icon(Icons.Rounded.PostAdd, contentDescription = "add books")
+        Icon(IconAddPost, contentDescription = "add books")
         //Text("Add Books")
     }
 
     IconButton(onClick = {
         viewModel.isEditingShelf.value = !viewModel.isEditingShelf.value
     }) {
-        Icon(Icons.Rounded.Edit, contentDescription = "Manage")
+        Icon(IconEdit, contentDescription = "Manage")
         //Text("Manage")
     }
     IconButton(onClick = { router.navByName(AppConstants.AppRoutes.Settings) }) {
-        Icon(Icons.Rounded.Settings, contentDescription = "Settings")
+        Icon(IconSettings, contentDescription = "Settings")
     }
 }
 
@@ -296,7 +290,7 @@ fun BookOperations(b: Book, h: Int, onDel: (b: Book)->Unit, setCover: (cover: Fi
     Column(
         Modifier.fillMaxWidth(0.8f).fillMaxHeight(0.8f).clip(RoundedCornerShape(4.dp)).zIndex(2f).background(MaterialTheme.colorScheme.surfaceVariant).alpha(0.5f), Arrangement.SpaceEvenly, Alignment.Start){
         //封面操作
-        BookOperation(if(b.hasCover == 1) Icons.Rounded.PhotoSizeSelectLarge else Icons.Rounded.AddPhotoAlternate, stringResource(if(b.hasCover == 1) R.string.cancel_cover else R.string.first_page_cover) ){
+        BookOperation(if(b.hasCover == 1) IconHideImg else IconAddPhotoAlternate, stringResource(if(b.hasCover == 1) R.string.cancel_cover else R.string.first_page_cover) ){
             scope.launch {
                 if(b.hasCover == 0){
                     val f = PdfPageLoader.loadFirstPageAsCover(b.id, ctx, h)//create cover file
@@ -315,7 +309,7 @@ fun BookOperations(b: Book, h: Int, onDel: (b: Book)->Unit, setCover: (cover: Fi
         }
 
         //暗黑模式切换
-        BookOperation(if(disableDarkMode) Icons.Rounded.Brightness4  else Icons.Rounded.Brightness1, stringResource(if(disableDarkMode) R.string.enable_dark_mode else R.string.disable_dark_mode) ){
+        BookOperation(if(disableDarkMode) IconDarkMode  else IconLightMode, stringResource(if(disableDarkMode) R.string.enable_dark_mode else R.string.disable_dark_mode) ){
             scope.launch {
                 if(b.disableDarkMode == 1){
                     b.disableDarkMode = 0
@@ -329,7 +323,7 @@ fun BookOperations(b: Book, h: Int, onDel: (b: Book)->Unit, setCover: (cover: Fi
         }
 
         //切换quality BookOperation后面跟lambda，每次运行时里面捕捉到的quality变量值是运行时上次更新的quality生效之前的值
-        BookOperation(Icons.Rounded.LensBlur, stringResource(quality2ResId(quality.value)) ){
+        BookOperation(IconLensBlur, stringResource(quality2ResId(quality.value)) ){
             scope.launch {
                 //这里必须使用updatedQuality，不能使用quality，因为lambda中捕捉到的变量值都是上一次更新生效之前的值，而不是更新后的值，
                 // 通过使用引用，可以使用最新值。updatedQuality相当于引用，通过它访问，总是得到最新的
@@ -349,7 +343,7 @@ fun BookOperations(b: Book, h: Int, onDel: (b: Book)->Unit, setCover: (cover: Fi
         }
 
         //删除操作
-        BookOperation(Icons.Rounded.Delete, stringResource(R.string.del) ){
+        BookOperation(IconDelete, stringResource(R.string.del) ){
             onDel(b)
         }
     }

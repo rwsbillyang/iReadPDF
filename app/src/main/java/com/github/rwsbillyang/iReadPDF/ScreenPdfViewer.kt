@@ -20,15 +20,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.LibraryBooks
-import androidx.compose.material.icons.rounded.Fullscreen
-import androidx.compose.material.icons.rounded.FullscreenExit
-import androidx.compose.material.icons.rounded.OpenInNew
-import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material.icons.rounded.Swipe
-import androidx.compose.material.icons.rounded.TextRotateUp
-import androidx.compose.material.icons.rounded.TextRotationDown
+
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -60,9 +52,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.zIndex
 import com.github.rwsbillyang.composerouter.ScreenCall
+import com.github.rwsbillyang.composerouter.icons.IconSettings
 import com.github.rwsbillyang.composerouter.useRouter
 import com.github.rwsbillyang.iReadPDF.AppConstants.TAG
 import com.github.rwsbillyang.iReadPDF.db.Book
+import com.github.rwsbillyang.iReadPDF.icons.*
+
 import com.github.rwsbillyang.iReadPDF.pdfview.PdfView
 import com.github.rwsbillyang.iReadPDF.pdfview.StatusCallBack
 import com.github.rwsbillyang.iReadPDF.pdfview.setFullScreen
@@ -119,18 +114,18 @@ fun ToolsBar(showPageNumberInputDlg: (show: Boolean)->Unit ,hideToolBar: ()-> Un
         val w = Modifier.weight(1f)
 
         if(b.moveable == 0){
-            ToolBarItem(R.string.movable, Icons.Rounded.Swipe, w){
+            ToolBarItem(R.string.movable, IconSwipe, w){
                 b.moveable = 1
                 hideToolBar()
             }
         }else{
-            ToolBarItem(R.string.nonmovable, Icons.Rounded.Swipe, w){
+            ToolBarItem(R.string.nonmovable, IconSwipe, w){
                 b.moveable = 0
                 hideToolBar()
             }
         }
 
-        ToolBarItem(R.string.jump, Icons.Rounded.OpenInNew, w){
+        ToolBarItem(R.string.jump, IconOpenInNew, w){
             showPageNumberInputDlg(true)
             hideToolBar()
         }
@@ -150,12 +145,12 @@ fun ToolsBar(showPageNumberInputDlg: (show: Boolean)->Unit ,hideToolBar: ()-> Un
 //        }
 
         if(b.rotation != 0){
-            ToolBarItem(R.string.rotation0, Icons.Rounded.TextRotateUp, w){
+            ToolBarItem(R.string.rotation0, IconRotateUp, w){
                 b.rotation = 0
                 hideToolBar()
             }
         }else{
-            ToolBarItem(R.string.rotation90, Icons.Rounded.TextRotationDown, w){
+            ToolBarItem(R.string.rotation90, IconRotateVertical, w){
                 b.rotation = 90
                 hideToolBar()
             }
@@ -163,13 +158,13 @@ fun ToolsBar(showPageNumberInputDlg: (show: Boolean)->Unit ,hideToolBar: ()-> Un
 
         if(window != null){
             if(b.fullScreen == 1){
-                ToolBarItem(R.string.fullscreen_exit, Icons.Rounded.FullscreenExit, w){
+                ToolBarItem(R.string.fullscreen_exit, IconFullscreenExit, w){
                     b.fullScreen = 0
                     window.setFullScreen(false)
                     hideToolBar()
                 }
             }else{
-                ToolBarItem(R.string.fullscreen, Icons.Rounded.Fullscreen, w){
+                ToolBarItem(R.string.fullscreen, IconFullscreen, w){
                     b.fullScreen = 1
                     window.setFullScreen(true)
                     hideToolBar()
@@ -178,11 +173,11 @@ fun ToolsBar(showPageNumberInputDlg: (show: Boolean)->Unit ,hideToolBar: ()-> Un
         }
 
 
-        ToolBarItem(R.string.bookshelf, Icons.AutoMirrored.Filled.LibraryBooks, w){
+        ToolBarItem(R.string.bookshelf, IconLibraryBooks, w){
             router.navByName(AppConstants.AppRoutes.BookShelf)
         }
 
-        ToolBarItem(R.string.settings, Icons.Rounded.Settings, w){
+        ToolBarItem(R.string.settings, IconSettings, w){
             //router.navByName(AppConstants.AppRoutes.BookSettings, b)
             router.navByName(AppConstants.AppRoutes.Settings)
         }

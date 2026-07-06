@@ -26,3 +26,5 @@
     public *** warn(...);
     public *** error(...);
 }
+-dontwarn androidx.window.extensions.**
+-dontwarn androidx.window.sidecar.**
